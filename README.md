@@ -83,7 +83,10 @@ The mode in when data is captured.
   - PASSIVE : Only capture and send when included in another DataGroup. This can be used for constantly changing data such as Axis Position to reduce the amount of data stored in the DataServer's database.
   
 #### Allow
-A list of Types to capture. This can also include container paths with the wildcard character (*) to allow any types within the container.
+A list of Types and Ids to capture. This can also include container paths with the wildcard character (*) to allow any types or ids within the container.
+
+- ID : DataItem/Component/Device Id to allow (case sensitive)
+- TYPE : DataItem/Component/Device Type to allow. Can be in the format of "PATH_FEEDRATE" or "PathFeedrate".
 
 #### Deny
 A list of Types to not capture. This overrides any allowed types.
