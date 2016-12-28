@@ -1,0 +1,34 @@
+﻿// Copyright (c) 2017 TrakHound Inc., All Rights Reserved.
+
+// This file is subject to the terms and conditions defined in
+// file 'LICENSE.txt', which is part of this source code package.
+
+using System.Xml.Serialization;
+
+namespace TrakHound.DataClient.DeviceFinder
+{
+    public class AddressRange
+    {
+        [XmlAttribute("minimum")]
+        public string Minimum { get; set; }
+
+        [XmlAttribute("maximum")]
+        public string Maximum { get; set; }
+
+        [XmlArray("Allow")]
+        [XmlArrayItem("Address")]
+        public string[] AllowedAddresses { get; set; }
+
+        [XmlArray("Deny")]
+        [XmlArrayItem("Address")]
+        public string[] DeniedAddresses { get; set; }
+
+        public AddressRange() { }
+
+        public AddressRange(string minimum, string maximum)
+        {
+            Minimum = minimum;
+            Maximum = maximum;
+        }
+    }
+}
