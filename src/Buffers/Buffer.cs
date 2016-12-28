@@ -10,6 +10,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.Reflection;
 using System.Xml.Serialization;
 using TrakHound.Api.v2.Streams;
 using TrakHound.DataClient.Data;
@@ -38,7 +39,7 @@ namespace TrakHound.DataClient.Buffers
         public string Hostname { get; set; }
 
         [XmlIgnore]
-        public List<IBufferData> Data { get; set; }
+        public List<IStreamData> Data { get; set; }
 
         private Thread writeThread;
         private ManualResetEvent writeStop;
@@ -54,7 +55,7 @@ namespace TrakHound.DataClient.Buffers
         {
             MaxFileSize = 1048576 * 100; // 100 MB
 
-            Data = new List<IBufferData>();
+            Data = new List<IStreamData>();
 
             writeStop = new ManualResetEvent(false);
             writeThread = new Thread(new ThreadStart(WriteWorker));
@@ -66,7 +67,7 @@ namespace TrakHound.DataClient.Buffers
             if (writeStop != null) writeStop.Set();
         }
 
-        public void Add(IBufferData data)
+        public void Add(IStreamData data)
         {
             lock(_lock)
             {
@@ -74,9 +75,9 @@ namespace TrakHound.DataClient.Buffers
             }        
         }
 
-        public void Add(List<IBufferData> data)
+        public void Add(List<IStreamData> data)
         {
-            lock (_lock)
+            lock (_lock) 
             {
                 Data.AddRange(data);
             }
@@ -105,7 +106,7 @@ namespace TrakHound.DataClient.Buffers
             // List of data that was succesfully written to file
             var l = new List<string>();
 
-            List<IBufferData> data;
+            List<IStreamData> data;
             lock (_lock) data = Data.ToList();
             if (data != null && data.Count > 0)
             {
@@ -138,7 +139,7 @@ namespace TrakHound.DataClient.Buffers
             }
         }
 
-        private List<string> WriteCsv(List<IBufferData> data, StreamDataType type)
+        private List<string> WriteCsv(List<IStreamData> data, StreamDataType type)
         {
             var stored = new List<string>();
 
@@ -250,6 +251,38 @@ namespace TrakHound.DataClient.Buffers
             return rt;
         }
 
+        //public List<IBufferData> ReadCsv(int maxRecords)
+        //{
+        //    int i = 0;
+
+        //    // Get list of Sample Buffer Files
+        //    var dir = GetDirectory();
+        //    if (System.IO.Directory.Exists(dir))
+        //    {
+        //        var buffers = System.IO.Directory.GetFiles(GetDirectory());
+        //        if (buffers != null)
+        //        {
+        //            var data = new List<IBufferData>();
+
+        //            // Read each Buffer file
+        //            foreach (var buffer in buffers)
+        //            {
+        //                var s = ReadCsv<IBufferData>(buffer, maxRecords - i);
+        //                if (s != null)
+        //                {
+        //                    i += s.Count;
+        //                    data.AddRange(s);
+
+        //                    if (i >= s.Count) break;
+        //                }
+        //            }
+
+        //            return data;
+        //        }
+        //    }
+
+        //    return null;
+        //}
 
         public List<T> ReadCsv<T>(int maxRecords)
         {
@@ -275,7 +308,7 @@ namespace TrakHound.DataClient.Buffers
                     // Read each Buffer file
                     foreach (var buffer in buffers)
                     {
-                        var s = ReadSamples<T>(buffer, maxRecords - i);
+                        var s = ReadCsv<T>(buffer, maxRecords - i);
                         if (s != null)
                         {
                             i += s.Count;
@@ -292,7 +325,7 @@ namespace TrakHound.DataClient.Buffers
             return null;
         }
 
-        private List<T> ReadSamples<T>(string path, int maxRecords)
+        private List<T> ReadCsv<T>(string path, int maxRecords)
         {
             if (File.Exists(path))
             {
@@ -354,7 +387,7 @@ namespace TrakHound.DataClient.Buffers
 
                 try
                 {
-                    var d = new List<IBufferData>();
+                    var d = new List<IStreamData>();
 
                     using (var f = new FileStream(path, FileMode.Open, FileAccess.ReadWrite))
                     using (var reader = new StreamReader(f))
@@ -364,7 +397,7 @@ namespace TrakHound.DataClient.Buffers
                         {
                             var line = reader.ReadLine();
 
-                            var data = Csv.FromCsv<IBufferData>(line);
+                            var data = Csv.FromCsv<IStreamData>(line);
                             if (data != null && !ids.Exists(o => o == data.EntryId))
                             {
                                 d.Add(data);
@@ -398,6 +431,24 @@ namespace TrakHound.DataClient.Buffers
 
             return false;
         }
-        
+
+
+        //public static  List<IStreamData> ConvertList(List<object> data)
+        //{
+        //    var l = data.Cast<IBufferData>();
+
+        //    var r = new List<IBufferData>();
+
+        //    if (l != null)
+        //    {
+        //        foreach (var i in l)
+        //        {
+        //            var d = i as IBufferData;
+        //            if (d != null) r.Add(d);
+        //        }
+        //    }
+
+        //    return r;
+        //}
     }
 }
