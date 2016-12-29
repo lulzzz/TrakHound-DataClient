@@ -271,10 +271,85 @@ Filters specify the path to either allow or deny. Below are examples of accecpta
 
 - **c1/*** (All types/ids WITHIN the component with the ID of "c1")
 
+#### Examples
 
+##### Example 1
+Watch for when new "Status" data items are received within a Controller component that isn't listed under the Deny list. DataItems are denied that change constantly such as the current program line/block, feedrate, etc. When a new item is found, include the DataGroup "all". This essentially takes a snapshot of the entire device whenever one of the "Status" items is changed. 
 
+```xml
+<!--All Data Items-->
+<DataGroup name="all" captureMode="PASSIVE">
+    <Allow>
+    <Filter>*</Filter>
+    </Allow>
+</DataGroup>
 
+<!--Device Status Data Group. Always send new data.-->
+<DataGroup name="status" captureMode="ACTIVE">
+    
+    <!--List the allowed Filters-->
+    <Allow>
+        <Filter>Controller/*</Filter>       
+    </Allow>
+    
+    <!--List the Denied Filters (Denied Filters override Allowed)-->
+    <Deny>
+        <Filter>Frt</Filter>
+        <Filter>PathFeedrate</Filter>
+        <Filter>PathPosition</Filter>
+        <Filter>Line</Filter>
+        <Filter>Block</Filter>
+    </Deny>
 
+    <!--List the additional groups to include when current group is captured-->
+    <Include>
+        <DataGroup>all</DataGroup>
+    </Include>
+    
+</DataGroup>
+```
+
+##### Example 2
+Only collect data for a single DataItem with the type of "EXECUTION".
+
+```xml
+<DataGroup name="execution" captureMode="ACTIVE">
+    <Allow>
+    <Filter>EXECUTION</Filter>
+    </Allow>
+</DataGroup>
+```
+
+##### Example 3
+Only collect axis data.
+
+```xml
+<DataGroup name="axes" captureMode="ACTIVE">
+    <Allow>
+    <Filter>Axes/*</Filter>
+    </Allow>
+</DataGroup>
+```
+
+##### Example 4
+Only collect data when the DataItem of type EMEGENCY_STOP is changed. 
+
+```xml
+<DataGroup name="all" captureMode="PASSIVE">
+    <Allow>
+    <Filter>*</Filter>
+    </Allow>
+</DataGroup>
+
+<DataGroup name="estop" captureMode="ACTIVE">
+    <Allow>
+        <Filter>EmergencyStop</Filter>       
+    </Allow>
+    <Include>
+        <DataGroup>all</DataGroup>
+    </Include>
+</DataGroup>
+```
 
 
 
