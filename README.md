@@ -31,7 +31,7 @@ Each TrakHound DataClient can also filter data to only send specific data to cer
 
 
 # Configuration
-Configuration is read from the **server.conf** XML file in the following format:
+Configuration is read from the **client.conf** XML file in the following format:
 
 ```xml
 <?xml version="1.0" encoding="utf-8" ?>
@@ -354,5 +354,7 @@ Only collect data when the DataItem of type EMEGENCY_STOP is changed.
 </DataGroup>
 ```
 
+# Purpose
+The purpose of the TrakHound DataClient and DataServer applications is to provide the manufacturing community with a Free and Open Source alternative so anyone can start collecting valuable machine data that can be used to analyze and improve future production in the upcoming years that will dominated by the IIoT. TrakHound provides you the tools to collect MTConnect data in near raw form and to store that data for later use. Even if you don't see the need for this data now, you may in several years and will wish you had previous year's data to compare. **Take the steps today to prepare for tomorrow and get started with IIoT with TrakHound!**
 
 
