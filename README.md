@@ -276,7 +276,7 @@ Filters specify the path to either allow or deny. Below are examples of accecpta
 
 #### Examples
 
-##### Example 1
+##### Example 1 (The "snapshot" technique)
 Watch for when new "Status" data items are received within a Controller component that isn't listed under the Deny list. DataItems are denied that change constantly such as the current program line/block, feedrate, etc. When a new item is found, include the DataGroup "all". This essentially takes a snapshot of the entire device whenever one of the "Status" items is changed. 
 
 ```xml
