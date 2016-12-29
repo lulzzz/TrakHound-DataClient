@@ -1,7 +1,18 @@
 ![TrakHound DataClient](dataclient-logo-100px.png)
 <br>
 <br>
-TrakHound Data Server is used to receive MTConnect® data streamed from TrakHound Data Clients and store that data in a database. Supports SSL for secure connections and uses streaming to minimize connections. Currently supports MySQL databases.
+TrakHound DataClient reads MTConnect® streams and sends the data to TrakHound DataServers to be stored. 
+
+
+# Features
+- Automatically finds and configures MTConnect devices on a network
+- Data filtering with triggers to collect all data or only what is needed
+- Ability to send data to multiple TrakHound DataServers to create data redundancy or to meet data security requirements (local vs cloud)
+- Utitlizes streaming connections for both MTConnect and connections to TrakHound DataServers
+- Supports SSL(TLS) for sending data to TrakHound DataServers
+- Non-volatile buffering to retain collected data between connection interruptions
+
+
 
 # Configuration
 Configuration is read from the **server.conf** XML file in the following format:
