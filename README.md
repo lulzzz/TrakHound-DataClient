@@ -222,6 +222,7 @@ Data Buffer Directory to buffer failed transfers until sent successfully. *If om
 
 ### DataGroups
 DataGroups allow configuration for what data is captured and sent to the DataServer. Data is filtered by Type or by their parent container type. DataGroups can include a list for allowed types as well as for denied types. A CaptureMode can also be defined to configure when the data in the DataGroup is sent.
+<br>
 **NOTE: The use of DataGroups to filter the amount of constantly changing data is highly recommended for most applications as database size can quickly become very large (>1,000,000 records within a few hours for a single device). The "snapshot" technique is the recommended method for most applications.**
 
 ```xml
