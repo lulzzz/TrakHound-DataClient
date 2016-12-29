@@ -35,48 +35,56 @@ Configuration is read from the **server.conf** XML file in the following format:
 
 ```xml
 <?xml version="1.0" encoding="utf-8" ?>
-<DataServer>
-  <Devices>
-    <Device deviceId="1234" deviceName="VMC-3Axis">http://agent.mtconnect.org</Device>
-    <Device deviceId="456" deviceName="OKUMA.Lathe">http://74.203.109.245:5001</Device>
-  </Devices>
-  <DataServers>
-    <DataServer url="http://api.trakhound.com" bufferPath="c:\TrakHound\Buffers\">
-      <DataTypes>
-        <DataType>POSITION</DataType>
-        <DataType>STATUS</DataType>
-        <DataType>PROGRAM</DataType>
-      </DataTypes>
-    </DataServer>
-  </DataServers>
-</DataServer>
-```
-
-```xml
-<?xml version="1.0" encoding="utf-8" ?>
 <DataClient>
+
+  <!--List of configured MTConnect Devices to read from-->
   <Devices>
     <Device deviceId="1234" deviceName="VMC-3Axis">http://agent.mtconnect.org</Device>
-    <Device deviceId="456" deviceName="OKUMA.Lathe">http://74.203.109.245:5001</Device>
   </Devices>
+
+  <!--Configuration for finding MTConnect Devices on the network-->
+  <DeviceFinder scanInterval="5000">
+    
+    <!--Specify Port Range-->
+    <Ports minimum="5000" maximum="5020"/>
+
+    <!--Specify Address Range-->
+    <Addresses minimum="192.168.1.100" maximum="192.168.1.120"/>
+    
+  </DeviceFinder>
+    
+  <!--Configuration for sending data to TrakHound DataServers-->
   <DataServers>
-    <DataServer url="http://api.trakhound.com" bufferPath="c:\TrakHound\Buffers\">
-      <DataTypes>
-        <DataType>POSITION</DataType>
-        <DataType>STATUS</DataType>
-        <DataType>PROGRAM</DataType>
-      </DataTypes>
+    <DataServer hostname="192.168.1.15" useSSL="true">
+      
+      <!--Data Buffer Directory to buffer failed transfers until sent successfully-->
+      <Buffer>c:\TrakHound\Buffers\</Buffer>
+      
+      <!--Define the data to send to DataServer-->
+      <DataGroups>
+
+        <!--Collect all data-->
+        <DataGroup name="all" captureMode="ACTIVE">
+          <Allow>
+            <Filter>*</Filter>
+          </Allow>
+        </DataGroup>
+
+      </DataGroups>
+
     </DataServer>
+    
   </DataServers>
+  
 </DataClient>
 ```
 
-## Device 
-Represents each MTConnect Agent that the Device Server going to be reading from.
+## Devices 
+List of configured MTConnect Devices to read from.
 
 #### Device ID 
 ###### *(XmlAttribute : deviceId)*
-The globally unique identifier for the device (usually a GUID)
+The globally unique identifier for the device. When detected automatically, the Device ID is a hash of the device's DeviceName, port, and MAC address. The MAC address is used so that MTConnect Agents can use DHCP while still being identified as the same device.
 
 #### Device Name
 ###### *(XmlAttribute : deviceName)*
