@@ -315,7 +315,7 @@ Only collect data for a single DataItem with the type of "EXECUTION".
 ```xml
 <DataGroup name="execution" captureMode="ACTIVE">
     <Allow>
-    <Filter>EXECUTION</Filter>
+       <Filter>EXECUTION</Filter>
     </Allow>
 </DataGroup>
 ```
@@ -326,7 +326,7 @@ Only collect axis data.
 ```xml
 <DataGroup name="axes" captureMode="ACTIVE">
     <Allow>
-    <Filter>Axes/*</Filter>
+       <Filter>Axes/*</Filter>
     </Allow>
 </DataGroup>
 ```
@@ -337,7 +337,7 @@ Only collect data when the DataItem of type EMEGENCY_STOP is changed.
 ```xml
 <DataGroup name="all" captureMode="PASSIVE">
     <Allow>
-    <Filter>*</Filter>
+       <Filter>*</Filter>
     </Allow>
 </DataGroup>
 
