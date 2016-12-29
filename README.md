@@ -141,7 +141,7 @@ Configuration for finding MTConnect Devices on the network. *If omitted, the net
 ###### *(XmlAttribute : scanInterval)*
 The interval (in milliseconds) at which the network will be scanned for new devices. *If omitted, the network will only be scanned when the DataClient is initially started.*
   
-## Ports
+### Ports
 Used to filter the ports to scan. *If omitted, the default port range of 5000 - 5010 will be used.*
 
 #### Minimum 
@@ -152,13 +152,13 @@ The minimum in the range of ports to search
 ###### *(XmlAttribute : maximum)*
 The maximum in the range of ports to search
 
-### Allow
+#### Allow
 List of Ports that are specifically allowed to be searched. *Allowed ports override the range and denied ports.*
 
-### Denied
+#### Denied
 List of Ports that are specically denied and not allowed to be searched.
 
-## Addresses
+### Addresses
 Used to filter the IP addresses to scan. *If omitted, all reachable IP addresses within the subnet will be scanned.*
 
 #### Minimum 
@@ -169,35 +169,70 @@ The minimum in the range of addresses to search
 ###### *(XmlAttribute : maximum)*
 The maximum in the range of addresses to search
 
-### Allow
+#### Allow
 List of Addresses that are specifically allowed to be searched. *Allowed addresses override the range and denied addresses.*
 
-### Denied
+#### Denied
 List of Addresses that are specically denied and not allowed to be searched.
 
 
-#### Device Name
-###### *(XmlAttribute : deviceName)*
-The DeviceName of the MTConnect Device to read from
+## DataServers
+Represents each TrakHound Data Server that data is sent to in order to be strored.
 
-#### Address
-###### *(XmlText)*
-The base Url of the MTConnect Agent. Do not specify the Device Name in the url, instead specify it under the deviceName attribute.
+```xml
+<DataServers>
+    <DataServer hostname="192.168.1.15" port="8472" useSSL="true">
+      
+      <!--Data Buffer Directory to buffer failed transfers until sent successfully-->
+      <Buffer>c:\TrakHound\Buffers\</Buffer>
+      
+      <!--Define the data to send to DataServer-->
+      <DataGroups>
 
-## Data Server
-Represents each TrakHound Data Server that data is sent to in order to be strored and processed.
+        <!--Collect ALL Data-->
+        <DataGroup name="all" captureMode="ACTIVE">
+          <Allow>
+            <Filter>*</Filter>
+          </Allow>
+        </DataGroup>
 
-#### Url 
-###### *(XmlAttribute : url)*
-The base Url of the TrakHound Data Server to send data to
+      </DataGroups>
 
-#### Buffer Path
-###### *(XmlAttribute : bufferPath)*
-The directory where the buffer files should be stored. The Buffer is used to store data that hasn't been successfully sent yet.
+    </DataServer>
+    
+  </DataServers>
+```
+
+#### Hostname 
+###### *(XmlAttribute : hostname)*
+The hostname of the TrakHound Data Server to send data to
+
+#### Port 
+###### *(XmlAttribute : port)*
+The port to send data to the TrakHound Data Server on. *If omitted, the default 8472 will be used.*
+
+#### Use SSL (Secure Socket Layer) 
+###### *(XmlAttribute : useSSL)*
+The hostname of the TrakHound Data Server to send data to. *If omitted, the default of False will be used.*
+
+
+### Buffer
+Data Buffer Directory to buffer failed transfers until sent successfully. *If omitted, no buffer will be used and may result in "lost" data.*
 
 
 ### DataGroups
 DataGroups allow configuration for what data is captured and sent to the DataServer. Data is filtered by Type or by their parent container type. DataGroups can include a list for allowed types as well as for denied types. A CaptureMode can also be defined to configure when the data in the DataGroup is sent.
+
+```xml
+<DataGroups>
+    <!--Collect ALL Data-->
+    <DataGroup name="all" captureMode="ACTIVE">
+        <Allow>
+        <Filter>*</Filter>
+        </Allow>
+    </DataGroup>
+</DataGroups>
+```
 
 #### Name
 The identifier for the DataGroup. This is primarily used when the DataGroup is being included in another group.
