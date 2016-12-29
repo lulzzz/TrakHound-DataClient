@@ -254,7 +254,14 @@ A list of Types to not capture. This overrides any allowed types.
 #### Include
 A list of other DataGroups to include when capturing for the current DataGroup. For example, this can be used to capture position data only when another group changes in order to reduce the amount of data stored in the DataServer's database.
 
+#### Filter
+Filters specify the path to either allow or deny. Below are examples of accecptable syntax:
 
+- * (All types/ids)
+- EmergencyStop (Any DataItem with the type of EMERGENCY_STOP) *Note: either format can be used "EmergencyStop" or "EMERGENCY_STOP"
+- cn2 (The DataItem with the ID of "cn2")
+- Controller/* (All types/ids WITHIN any component of type Controller)
+- Controller/Path/* (All types/ids WITHIN any component of type Path that is also within a Controller component)
 
 
 
