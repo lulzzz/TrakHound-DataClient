@@ -8,11 +8,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Xml.Serialization;
-using TrakHound.Api.v2;
-using TrakHound.DataClient.DataGroups;
 using TrakHound.Api.v2.Streams;
-using TrakHound.DataClient.Buffers;
 using TrakHound.DataClient.Data;
+using TrakHound.DataClient.DataGroups;
 
 namespace TrakHound.DataClient
 {

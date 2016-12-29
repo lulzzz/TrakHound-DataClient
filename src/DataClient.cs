@@ -11,7 +11,6 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using TrakHound.Api.v2.Streams;
-
 using TrakHound.DataClient.Data;
 
 namespace TrakHound.DataClient
@@ -26,7 +25,6 @@ namespace TrakHound.DataClient
         public static List<ComponentDefinition> ComponentDefinitions = new List<ComponentDefinition>();
         public static List<DataItemDefinition> DataItemDefinitions = new List<DataItemDefinition>();
         public static List<DeviceDefinition> DeviceDefinitions = new List<DeviceDefinition>();
-
 
         public static List<Sample> CurrentSamples = new List<Sample>();
 

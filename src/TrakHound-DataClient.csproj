@@ -78,9 +78,8 @@
     <Compile Include="Csv.cs" />
     <Compile Include="Data\AgentDefinition.cs" />
     <Compile Include="Data\DeviceDefinition.cs" />
-    <None Include="Buffers\IBufferData.cs" />
     <Compile Include="DeviceFinder\AddressRange.cs" />
-    <Compile Include="Buffers\Buffer.cs" />
+    <Compile Include="Buffer.cs" />
     <Compile Include="Configuration.cs" />
     <Compile Include="Data\ComponentDefinition.cs" />
     <None Include="ContainerType.cs" />
@@ -93,10 +92,8 @@
     <Compile Include="Device.cs" />
     <Compile Include="DataClient.cs" />
     <Compile Include="DeviceFinder\DeviceFinder.cs" />
-    <None Include="Data\Definition.cs" />
     <Compile Include="DeviceFinder\PortRange.cs" />
     <Compile Include="EpochJsonConverter.cs" />
-    <None Include="SendItem.cs" />
     <Compile Include="Service.cs">
       <SubType>Component</SubType>
     </Compile>
