@@ -10,6 +10,9 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
+using TrakHound.Api.v2.Streams;
+
+using TrakHound.DataClient.Data;
 
 namespace TrakHound.DataClient
 {
@@ -19,12 +22,13 @@ namespace TrakHound.DataClient
 
         private object _lock = new object();
 
+        public static List<AgentDefinition> AgentDefinitions = new List<AgentDefinition>();
+        public static List<ComponentDefinition> ComponentDefinitions = new List<ComponentDefinition>();
+        public static List<DataItemDefinition> DataItemDefinitions = new List<DataItemDefinition>();
+        public static List<DeviceDefinition> DeviceDefinitions = new List<DeviceDefinition>();
 
-        public static List<DataDefinition> DataDefinitions = new List<DataDefinition>();
 
-        public static List<ContainerDefinition> ContainerDefinitions = new List<ContainerDefinition>();
-
-        public static List<DataSample> CurrentSamples = new List<DataSample>();
+        public static List<Sample> CurrentSamples = new List<Sample>();
 
 
         public Configuration Configuration { get; set; }
@@ -58,9 +62,11 @@ namespace TrakHound.DataClient
             // Start Devices
             foreach (var device in config.Devices)
             {
-                device.ContainerDefinitionsReceived += ContainerDefinitionsReceived;
-                device.DataDefinitionsReceived += DataDefinitionsReceived;
-                device.DataSamplesReceived += DataSamplesReceived;
+                device.AgentDefinitionsReceived += AgentDefinitionReceived;
+                device.ComponentDefinitionsReceived += ContainerDefinitionsReceived;
+                device.DataItemDefinitionsReceived += DataDefinitionsReceived;
+                device.DeviceDefinitionsReceived += DeviceDefinitionReceived;
+                device.SamplesReceived += SamplesReceived;
                 device.Start();
             }
 
@@ -135,33 +141,77 @@ namespace TrakHound.DataClient
             return s;
         }
 
-        private void ContainerDefinitionsReceived(List<ContainerDefinition> definitions)
+        private void AgentDefinitionReceived(AgentDefinition definition)
+        {
+            lock (_lock)
+            {
+                int i = AgentDefinitions.FindIndex(o => o.DeviceId == definition.DeviceId && o.InstanceId == definition.InstanceId);
+                if (i >= 0) AgentDefinitions.RemoveAt(i);
+                AgentDefinitions.Add(definition);
+            }
+
+            // Send to DataServers
+            foreach (var dataServer in Configuration.DataServers)
+            {
+                dataServer.Add(definition);
+            }
+        }
+
+        private void ContainerDefinitionsReceived(List<ComponentDefinition> definitions)
         {
             foreach (var definition in definitions)
             {
                 lock (_lock)
                 {
-                    int i = ContainerDefinitions.FindIndex(o => o.DeviceId == definition.DeviceId && o.Id == definition.Id);
-                    if (i >= 0) ContainerDefinitions.RemoveAt(i);
-                    ContainerDefinitions.Add(definition);
+                    int i = ComponentDefinitions.FindIndex(o => o.DeviceId == definition.DeviceId && o.Id == definition.Id);
+                    if (i >= 0) ComponentDefinitions.RemoveAt(i);
+                    ComponentDefinitions.Add(definition);
                 }
+            }
+
+            // Send to DataServers
+            foreach (var dataServer in Configuration.DataServers)
+            {
+                dataServer.Add(definitions.ToList<IStreamData>());
             }
         }
 
-        private void DataDefinitionsReceived(List<DataDefinition> definitions)
+        private void DataDefinitionsReceived(List<DataItemDefinition> definitions)
         {
             foreach (var definition in definitions)
             {
                 lock (_lock)
                 {
-                    int i = DataDefinitions.FindIndex(o => o.DeviceId == definition.DeviceId && o.Id == definition.Id);
-                    if (i >= 0) DataDefinitions.RemoveAt(i);
-                    DataDefinitions.Add(definition);
+                    int i = DataItemDefinitions.FindIndex(o => o.DeviceId == definition.DeviceId && o.Id == definition.Id);
+                    if (i >= 0) DataItemDefinitions.RemoveAt(i);
+                    DataItemDefinitions.Add(definition);
                 }
+            }
+
+            // Send to DataServers
+            foreach (var dataServer in Configuration.DataServers)
+            {
+                dataServer.Add(definitions.ToList<IStreamData>());
             }
         }
 
-        private void DataSamplesReceived(List<DataSample> samples)
+        private void DeviceDefinitionReceived(DeviceDefinition definition)
+        {
+            lock (_lock)
+            {
+                int i = DeviceDefinitions.FindIndex(o => o.DeviceId == definition.DeviceId && o.Id == definition.Id);
+                if (i >= 0) DeviceDefinitions.RemoveAt(i);
+                DeviceDefinitions.Add(definition);
+            }
+
+            // Send to DataServers
+            foreach (var dataServer in Configuration.DataServers)
+            {
+                dataServer.Add(definition);
+            }
+        }
+
+        private void SamplesReceived(List<Sample> samples)
         {
             // Update Current Samples
             foreach (var sample in samples)
@@ -174,9 +224,10 @@ namespace TrakHound.DataClient
                 }
             }
 
+            // Send to DataServers
             foreach (var dataServer in Configuration.DataServers)
             {
-                dataServer.Add(samples);
+                dataServer.Add(samples.ToList<IStreamData>());
             }
         }
 

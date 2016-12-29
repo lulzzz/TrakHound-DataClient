@@ -4,11 +4,11 @@
 // file 'LICENSE.txt', which is part of this source code package.
 
 using System;
-using System.Linq;
 using System.Collections.Generic;
-using System.Xml.Serialization;
 using System.Globalization;
 using System.Text.RegularExpressions;
+using System.Xml.Serialization;
+using TrakHound.DataClient.Data;
 
 namespace TrakHound.DataClient.DataGroups
 {
@@ -51,11 +51,11 @@ namespace TrakHound.DataClient.DataGroups
         public List<string> IncludedDataGroups { get; set; }
 
 
-        public bool CheckFilters(DataSample sample)
+        public bool CheckFilters(Sample sample)
         {
             string deviceId = sample.DeviceId;
 
-            var dataDefinition = DataClient.DataDefinitions.Find(o => o.DeviceId == deviceId && o.Id == sample.Id);
+            var dataDefinition = DataClient.DataItemDefinitions.Find(o => o.DeviceId == deviceId && o.Id == sample.Id);
             if (dataDefinition != null)
             {
                 bool match = false;
@@ -87,16 +87,16 @@ namespace TrakHound.DataClient.DataGroups
             return false;
         }
 
-        private bool CheckFilter(DataDefinition dataDefinition, string filter)
+        private bool CheckFilter(DataItemDefinition dataItemDefinition, string filter)
         {
             if (!string.IsNullOrEmpty(filter))
             {
-                string deviceId = dataDefinition.DeviceId;
+                string deviceId = dataItemDefinition.DeviceId;
 
                 var paths = filter.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
                 if (paths != null)
                 {
-                    string id = dataDefinition.ParentId;
+                    string id = dataItemDefinition.ParentId;
                     if (!string.IsNullOrEmpty(id))
                     {
                         bool match = false;
@@ -111,17 +111,17 @@ namespace TrakHound.DataClient.DataGroups
                                 if (HasWildcard(filter)) match = true;
                                 else
                                 {
-                                    match = NormalizeType(dataDefinition.Type) == NormalizeType(path);
-                                    if (!match) match = dataDefinition.Id == path;
+                                    match = NormalizeType(dataItemDefinition.Type) == NormalizeType(path);
+                                    if (!match) match = dataItemDefinition.Id == path;
                                 }
                             }
                             else
                             {
-                                var containerDefinition = DataClient.ContainerDefinitions.Find(o => o.DeviceId == deviceId && o.Id == id);
+                                var containerDefinition = DataClient.ComponentDefinitions.Find(o => o.DeviceId == deviceId && o.Id == id);
                                 if (containerDefinition != null)
                                 {
                                     id = containerDefinition.ParentId;
-                                    match = NormalizeType(containerDefinition.Type) == NormalizeType(path);
+                                    match = NormalizeType(containerDefinition.Component) == NormalizeType(path);
                                     if (!match) match = containerDefinition.Id == path;
                                 }
                             }

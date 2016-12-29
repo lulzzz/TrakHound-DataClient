@@ -9,11 +9,16 @@ using System.Collections.Generic;
 using System.Xml.Serialization;
 using MTConnectDevices = MTConnect.MTConnectDevices;
 using MTConnectStreams = MTConnect.MTConnectStreams;
+using TrakHound.DataClient.Data;
 
 namespace TrakHound.DataClient
 {
     public class Device
     {
+        private static Logger logger = LogManager.GetCurrentClassLogger();
+
+        private MTConnectClient agentClient;
+
         [XmlAttribute("deviceId")]
         public string DeviceId { get; set; }
 
@@ -23,13 +28,12 @@ namespace TrakHound.DataClient
         [XmlAttribute("deviceName")]
         public string DeviceName { get; set; }
 
-        public event ContainerDefinitionsHandler ContainerDefinitionsReceived;
-        public event DataDefinitionsHandler DataDefinitionsReceived;
-        public event DataSamplesHandler DataSamplesReceived;
+        public event AgentDefinitionsHandler AgentDefinitionsReceived;
+        public event ComponentDefinitionsHandler ComponentDefinitionsReceived;
+        public event DataItemDefinitionsHandler DataItemDefinitionsReceived;
+        public event DeviceDefinitionsHandler DeviceDefinitionsReceived;
+        public event SamplesHandler SamplesReceived;
 
-        private static Logger logger = LogManager.GetCurrentClassLogger();
-
-        private MTConnectClient agentClient;
 
         public void Start()
         {
@@ -58,32 +62,38 @@ namespace TrakHound.DataClient
 
         void DevicesSuccessful(MTConnectDevices.Document document)
         {
-            if (document.Devices != null && document.Devices.Count > 0)
+            if (document.Header != null)
             {
-                var dataDefinitions = new List<DataDefinition>();
-                var containerDefinitions = new List<ContainerDefinition>();
+                // Send Agent Definition
+                AgentDefinitionsReceived?.Invoke(new AgentDefinition(DeviceId, document.Header));
+            }
+
+            if (document.Devices != null && document.Devices.Count == 1)
+            {
+                var dataItemDefinitions = new List<DataItemDefinition>();
+                var componentDefinitions = new List<ComponentDefinition>();
 
                 var device = document.Devices[0];
 
-                // Add Device Container
-                containerDefinitions.Add(new ContainerDefinition(DeviceId, device));
+                // Send Device Definition
+                DeviceDefinitionsReceived?.Invoke(new DeviceDefinition(DeviceId, device));
 
                 // Add Path DataItems
                 foreach (var item in device.DataItems)
                 {
-                    dataDefinitions.Add(new DataDefinition(DeviceId, item, device.Id));
+                    dataItemDefinitions.Add(new DataItemDefinition(DeviceId, item, device.Id));
                 }
 
                 // Create a ContainerDefinition for each Component
                 foreach (var component in device.Components)
                 {
                     // Add Component Container
-                    containerDefinitions.Add(new ContainerDefinition(DeviceId, component, null));
+                    componentDefinitions.Add(new ComponentDefinition(DeviceId, component, null));
 
                     // Add Path DataItems
                     foreach (var item in component.DataItems)
                     {
-                        dataDefinitions.Add(new DataDefinition(DeviceId, item, component.Id));
+                        dataItemDefinitions.Add(new DataItemDefinition(DeviceId, item, component.Id));
                     }
 
                     // Process Axes Component
@@ -93,12 +103,12 @@ namespace TrakHound.DataClient
                         foreach (var axis in axes.Components)
                         {
                             // Add Axis Component
-                            containerDefinitions.Add(new ContainerDefinition(DeviceId, axis, component.Id));
+                            componentDefinitions.Add(new ComponentDefinition(DeviceId, axis, component.Id));
 
                             // Add Path DataItems
                             foreach (var item in axis.DataItems)
                             {
-                                dataDefinitions.Add(new DataDefinition(DeviceId, item, axis.Id));
+                                dataItemDefinitions.Add(new DataItemDefinition(DeviceId, item, axis.Id));
                             }
                         }
                     }
@@ -110,22 +120,22 @@ namespace TrakHound.DataClient
                         foreach (var path in controller.Components)
                         {
                             // Add Path Component
-                            containerDefinitions.Add(new ContainerDefinition(DeviceId, path, component.Id));
+                            componentDefinitions.Add(new ComponentDefinition(DeviceId, path, component.Id));
 
                             // Add Path DataItems
                             foreach (var item in path.DataItems)
                             {
-                                dataDefinitions.Add(new DataDefinition(DeviceId, item, path.Id));
+                                dataItemDefinitions.Add(new DataItemDefinition(DeviceId, item, path.Id));
                             }
                         }
                     }
                 }
 
                 // Send ContainerDefinition Objects
-                if (containerDefinitions.Count > 0) ContainerDefinitionsReceived?.Invoke(containerDefinitions);
+                if (componentDefinitions.Count > 0) ComponentDefinitionsReceived?.Invoke(componentDefinitions);
 
-                // Send DataDefinition Objects
-                if (dataDefinitions.Count > 0) DataDefinitionsReceived?.Invoke(dataDefinitions);
+                // Send DataItemDefinition Objects
+                if (dataItemDefinitions.Count > 0) DataItemDefinitionsReceived?.Invoke(dataItemDefinitions);
             }
         }
 
@@ -133,16 +143,16 @@ namespace TrakHound.DataClient
         {
             if (document.DeviceStreams != null && document.DeviceStreams.Count > 0)
             {
-                var dataSamples = new List<DataSample>();
+                var samples = new List<Data.Sample>();
 
                 var deviceStream = document.DeviceStreams[0];
 
                 foreach (var dataItem in deviceStream.DataItems)
                 {
-                    dataSamples.Add(new DataSample(DeviceId, dataItem));
+                    samples.Add(new Data.Sample(DeviceId, dataItem));
                 }
 
-                if (dataSamples.Count > 0) DataSamplesReceived?.Invoke(dataSamples);
+                if (samples.Count > 0) SamplesReceived?.Invoke(samples);
             }
         }
     }
