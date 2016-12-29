@@ -105,6 +105,85 @@ The DeviceName of the MTConnect Device to read from
 ###### *(XmlText)*
 The base Url of the MTConnect Agent. Do not specify the Device Name in the url, instead specify it under the deviceName attribute.
 
+## DeviceFinder 
+Configuration for finding MTConnect Devices on the network. *If omitted, the network will not be scanned and no devices will be automatically found or configured.*
+
+```xml
+ <DeviceFinder scanInterval="5000">
+    
+    <!--Specify Port Range-->
+    <Ports minimum="5000" maximum="5020">
+      <Allow>
+        <Port>5120</Port>
+      </Allow>
+      <Deny>
+        <Port>5002</Port>
+        <Port>5003</Port>
+        <Port>5007</Port> 
+      </Deny>
+    </Ports>
+
+    <!--Specify Address Range-->    
+    <Addresses minimum="192.168.1.100" maximum="192.168.1.120">
+      <Allow>
+        <Address>192.168.1.198</Address>    
+      </Allow>
+      <Deny>
+        <Address>192.168.1.110</Address>
+        <Address>192.168.1.102</Address>  
+      </Deny>
+    </Addresses>
+    
+  </DeviceFinder>
+  ```
+  
+#### Scan Interval 
+###### *(XmlAttribute : scanInterval)*
+The interval (in milliseconds) at which the network will be scanned for new devices. *If omitted, the network will only be scanned when the DataClient is initially started.*
+  
+## Ports
+Used to filter the ports to scan. *If omitted, the default port range of 5000 - 5010 will be used.*
+
+#### Minimum 
+###### *(XmlAttribute : minimum)*
+The minimum in the range of ports to search
+
+#### Maximum 
+###### *(XmlAttribute : maximum)*
+The maximum in the range of ports to search
+
+### Allow
+List of Ports that are specifically allowed to be searched. *Allowed ports override the range and denied ports.*
+
+### Denied
+List of Ports that are specically denied and not allowed to be searched.
+
+## Addresses
+Used to filter the IP addresses to scan. *If omitted, all reachable IP addresses within the subnet will be scanned.*
+
+#### Minimum 
+###### *(XmlAttribute : minimum)*
+The minimum in the range of addresses to search
+
+#### Maximum 
+###### *(XmlAttribute : maximum)*
+The maximum in the range of addresses to search
+
+### Allow
+List of Addresses that are specifically allowed to be searched. *Allowed addresses override the range and denied addresses.*
+
+### Denied
+List of Addresses that are specically denied and not allowed to be searched.
+
+
+#### Device Name
+###### *(XmlAttribute : deviceName)*
+The DeviceName of the MTConnect Device to read from
+
+#### Address
+###### *(XmlText)*
+The base Url of the MTConnect Agent. Do not specify the Device Name in the url, instead specify it under the deviceName attribute.
+
 ## Data Server
 Represents each TrakHound Data Server that data is sent to in order to be strored and processed.
 
