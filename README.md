@@ -258,10 +258,18 @@ A list of other DataGroups to include when capturing for the current DataGroup. 
 Filters specify the path to either allow or deny. Below are examples of accecptable syntax:
 
 - ***** (All types/ids)
+
 - **EmergencyStop** (Any DataItem with the type of EMERGENCY_STOP) *Note: either format can be used "EmergencyStop" or "EMERGENCY_STOP"
-- **cn2** (The DataItem with the ID of "cn2")
+
+- **cn2** (Only the DataItem with the ID of "cn2")
+
 - **Controller/*** (All types/ids WITHIN any component of type Controller)
+
 - **Controller/Path/*** (All types/ids WITHIN any component of type Path that is also within a Controller component)
+
+- **Controller/Path/cn3** (Only the DataItem with the ID of "cn3" that is within Path component that is also within a Controller component)
+
+- **c1/*** (All types/ids WITHIN the component with the ID of "c1")
 
 
 
