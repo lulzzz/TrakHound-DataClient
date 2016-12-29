@@ -82,6 +82,17 @@ Configuration is read from the **server.conf** XML file in the following format:
 ## Devices 
 List of configured MTConnect Devices to read from.
 
+```xml
+ <Devices>
+    <Device deviceId="1234" deviceName="VMC-3Axis">http://agent.mtconnect.org</Device>
+    <Device deviceId="TY3FNQCZKM3R2V0WWI9H3AUISLW" deviceName="Haas_Device">http://192.168.1.198:5000</Device>
+    <Device deviceId="KGI13AOQSUERHF1XVQSFWLDIBS" deviceName="OKUMA.Lathe">http://192.168.1.198:5001</Device>
+    <Device deviceId="RVJGKEA9ZXUPUIGFVMTQP98L0UY" deviceName="OKUMA.Lathe">http://192.168.1.198:5006</Device>
+    <Device deviceId="UPSFKO6IBDAEOPSFEHLGAIMLCM" deviceName="OKUMA.MachiningCenter">http://192.168.1.198:5003</Device>
+    <Device deviceId="UXJGZKSQS9DIEY7JQ912RS7Q4" deviceName="OKUMA.Grinder">http://192.168.1.198:5002</Device>
+  </Devices>
+  ```
+
 #### Device ID 
 ###### *(XmlAttribute : deviceId)*
 The globally unique identifier for the device. When detected automatically, the Device ID is a hash of the device's DeviceName, port, and MAC address. The MAC address is used so that MTConnect Agents can use DHCP while still being identified as the same device.
