@@ -7,6 +7,15 @@ TrakHound DataClient and DataServer are designed specifically to store MTConnect
 
 ![TrakHound DataClients and DataServers](DataClient-Server-01.jpg)
 
+# Features
+- Automatically finds and configures MTConnect devices on a network
+- Data filtering with triggers to collect all data or only what is needed
+- Ability to send data to multiple TrakHound DataServers to create data redundancy or to meet data security requirements (local vs cloud)
+- Utitlizes streaming connections for both MTConnect and connections to TrakHound DataServers
+- Supports SSL(TLS) for sending data to TrakHound DataServers
+- Non-volatile buffering to retain collected data between connection interruptions
+
+
 ### Data Storage
 **MTConnect Agents by themselves are not storage applications.** This is made clear in the MTConnect Standard. Instead the purpose of MTConnect Agents is to serve data to client applications when requested. While the Agent does keep a small buffer, this buffer is not intended to be used for data storage but rather to retain data between connection interruptions. TrakHound fulfills the role of requesting this data and then storing it in a database for permanant storage. Data is stored which can then be accessed by other TrakHound applications, ERP/MES systems, third party software, or by reading the database directly using software such as Microsoft Access.
 
@@ -19,15 +28,6 @@ One of the main goals of TrakHound is to provide tools to securely collect data 
 By centralizing the point where data is accessed, TrakHound also allows internal machine networks to stay isolated from external networks to prevent both unauthorized data access and possible viruses from effecting the machine controls themselves.
 
 Each TrakHound DataClient can also filter data to only send specific data to certain DataServers. This can be used to only send status data to a cloud server used for machine status monitoring, while sending ALL data to a secure onsite server. 
-
-# Features
-- Automatically finds and configures MTConnect devices on a network
-- Data filtering with triggers to collect all data or only what is needed
-- Ability to send data to multiple TrakHound DataServers to create data redundancy or to meet data security requirements (local vs cloud)
-- Utitlizes streaming connections for both MTConnect and connections to TrakHound DataServers
-- Supports SSL(TLS) for sending data to TrakHound DataServers
-- Non-volatile buffering to retain collected data between connection interruptions
-
 
 
 # Configuration
