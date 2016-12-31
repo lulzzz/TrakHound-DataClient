@@ -32,6 +32,8 @@ By centralizing the point where data is accessed, TrakHound also allows internal
 
 Each TrakHound DataClient can also filter data to only send specific data to certain DataServers. This can be used to only send status data to a cloud server used for machine status monitoring, while sending ALL data to a secure onsite server. 
 
+Of course, the biggest security benefit to using TrakHound is that it is Open Source and the source code can be reviewed to insure exactly what data is being collected and to make sure that no other data is being sent anywhere it shouldn't be.
+
 
 # Configuration
 Configuration is read from the **client.conf** XML file in the following format:
