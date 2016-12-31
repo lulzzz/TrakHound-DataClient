@@ -16,6 +16,9 @@ using TrakHound.DataClient.Data;
 
 namespace TrakHound.DataClient
 {
+    /// <summary>
+    /// Handles the buffering of data when it failed to send successfully from a DataServer
+    /// </summary>
     public class Buffer
     {
         public const string FILENAME_AGENT_DEFINITIONS = "agent_definitions";
@@ -24,25 +27,39 @@ namespace TrakHound.DataClient
         public const string FILENAME_DEVICE_DEFINITIONS = "device_definitions";
         public const string FILENAME_SAMPLES = "samples";
 
-        private const int BUFFER_FILE_PADDING = 100;
-
         private static Logger log = LogManager.GetCurrentClassLogger();
 
+        private string _directory { get; set; }
+        /// <summary>
+        /// Gets the directory that the buffer writes to. Read Only.
+        /// </summary>
         [XmlText]
-        public string Directory { get; set; }
+        public string Directory
+        {
+            get { return _directory; }
+            set
+            {
+                if (_directory != null) throw new InvalidOperationException("Cannot set value. Directory is ReadOnly!");
+                _directory = value;
+            }
+        }
 
+        /// <summary>
+        /// Gets or Sets the maximum file size that each buffer file should be.
+        /// </summary>
         [XmlAttribute("maxFileSize")]
         public long MaxFileSize { get; set; }
 
+        internal string _hostname;
+        /// <summary>
+        /// Gets the Hostname of the DataServer that the buffer is for
+        /// </summary>
         [XmlIgnore]
-        public string Hostname { get; set; }
+        public string Hostname { get { return _hostname; } }
 
-        [XmlIgnore]
-        public List<IStreamData> Data { get; set; }
-
-        private Thread writeThread;
-        private ManualResetEvent writeStop;
-
+        private List<IStreamData> data = new List<IStreamData>();
+        private Thread thread;
+        private ManualResetEvent stop;
         private object _lock = new object();
 
         public Buffer()
@@ -50,44 +67,297 @@ namespace TrakHound.DataClient
             Init();
         }
 
+        public Buffer(string directory)
+        {
+            Init();
+            _directory = directory;
+        }
+
         private void Init()
         {
             MaxFileSize = 1048576 * 100; // 100 MB
-
-            Data = new List<IStreamData>();
-
-            writeStop = new ManualResetEvent(false);
-            writeThread = new Thread(new ThreadStart(WriteWorker));
-            writeThread.Start();
         }
 
-        public void Close()
+        /// <summary>
+        /// Start the Buffer Read/Write thread
+        /// </summary>
+        /// <param name="hostname"></param>
+        public void Start(string hostname)
         {
-            if (writeStop != null) writeStop.Set();
+            _hostname = hostname;
+
+            stop = new ManualResetEvent(false);
+
+            thread = new Thread(new ThreadStart(WriteWorker));
+            thread.Start();
         }
 
-        public void Add(IStreamData data)
+        /// <summary>
+        /// Stop the Buffer
+        /// </summary>
+        public void Stop()
+        {
+            if (stop != null) stop.Set();
+        }
+
+
+        /// <summary>
+        /// Add a single StreamData item
+        /// </summary>
+        /// <param name="streamData"></param>
+        public void Add(IStreamData streamData)
         {
             lock(_lock)
             {
-                Data.Add(data);
+                data.Add(streamData);
             }        
         }
 
-        public void Add(List<IStreamData> data)
+        /// <summary>
+        /// Add a list of StreamData items
+        /// </summary>
+        /// <param name="streamData"></param>
+        public void Add(List<IStreamData> streamData)
         {
             lock (_lock) 
             {
-                Data.AddRange(data);
+                data.AddRange(streamData);
             }
         }
 
+        /// <summary>
+        /// Read a number of items from the Buffer
+        /// </summary>
+        /// <typeparam name="T">Type of item to read</typeparam>
+        /// <param name="maxRecords">Maximum number of items to read</param>
+        public List<T> Read<T>(int maxRecords)
+        {
+            int i = 0;
+
+            // Get list of Sample Buffer Files
+            var dir = GetDirectory();
+            if (System.IO.Directory.Exists(dir))
+            {
+                string f = null;
+
+                if (typeof(T) == typeof(AgentDefinition)) f = FILENAME_AGENT_DEFINITIONS;
+                else if (typeof(T) == typeof(ComponentDefinition)) f = FILENAME_COMPONENT_DEFINITIONS;
+                else if (typeof(T) == typeof(DataItemDefinition)) f = FILENAME_DATA_ITEM_DEFINITIONS;
+                else if (typeof(T) == typeof(DeviceDefinition)) f = FILENAME_DEVICE_DEFINITIONS;
+                else if (typeof(T) == typeof(Sample)) f = FILENAME_SAMPLES;
+
+                var buffers = System.IO.Directory.GetFiles(GetDirectory(), f + "*");
+                if (buffers != null)
+                {
+                    var data = new List<T>();
+
+                    // Read each Buffer file
+                    foreach (var buffer in buffers)
+                    {
+                        var s = ReadFromFile<T>(buffer, maxRecords - i);
+                        if (s != null)
+                        {
+                            i += s.Count;
+                            data.AddRange(s);
+
+                            if (i >= s.Count) break;
+                        }
+                    }
+
+                    return data;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Remove a list of Ids from the buffer files
+        /// </summary>
+        public bool Remove(List<string> ids)
+        {
+            // Get list of Sample Buffer Files
+            var buffers = System.IO.Directory.GetFiles(GetDirectory());
+            if (buffers != null)
+            {
+                // Read each Buffer file
+                foreach (var buffer in buffers)
+                {
+                    if (!RemoveFromFile(buffer, ids)) return false;
+                }
+            }
+
+            return true;
+        }
+
+
         private void WriteWorker()
         {
-            while (!writeStop.WaitOne(2000, true))
+            while (!stop.WaitOne(2000, true))
             {
-                WriteCsv();
+                WriteToFile();
             }
+        }
+
+        private void WriteToFile()
+        {
+            // List of data that was succesfully written to file
+            var l = new List<string>();
+
+            // Create a temporary list (to not lock up original list)
+            List<IStreamData> temp;
+            lock (_lock) temp = data.ToList();
+            if (temp != null && temp.Count > 0)
+            {
+                // Write Agent Definitions
+                l.AddRange(WriteToFile(temp.OfType<AgentDefinition>().ToList<IStreamData>(), StreamDataType.AGENT_DEFINITION));
+
+                // Write Component Defintions
+                l.AddRange(WriteToFile(temp.OfType<ComponentDefinition>().ToList<IStreamData>(), StreamDataType.COMPONENT_DEFINITION));
+
+                // Write DataItem Defintions
+                l.AddRange(WriteToFile(temp.OfType<DataItemDefinition>().ToList<IStreamData>(), StreamDataType.DATA_ITEM_DEFINITION));
+
+                // Write Device Defintions
+                l.AddRange(WriteToFile(temp.OfType<DeviceDefinition>().ToList<IStreamData>(), StreamDataType.DEVICE_DEFINITION));
+
+                // Write Samples
+                l.AddRange(WriteToFile(temp.OfType<Sample>().ToList<IStreamData>(), StreamDataType.SAMPLE));
+
+
+                // Remove from List
+                lock (_lock)
+                {
+                    data.RemoveAll(o => l.Contains(o.EntryId));
+                }
+            }
+        }
+
+        private List<string> WriteToFile(List<IStreamData> streamData, StreamDataType type)
+        {
+            // Create a list with the list of EntryIds of each successfully written item
+            var written = new List<string>();
+
+            try
+            {
+                do
+                {
+                    // Get the filepath based on the Type of StreamData being written
+                    string path = GetPath(type);
+
+                    // Start Append FileStream
+                    using (var fileStream = new FileStream(path, FileMode.Append, FileAccess.Write, FileShare.Write))
+                    {
+                        foreach (var item in streamData)
+                        {
+                            // Write CSV lines
+                            string s = Csv.ToCsv(item) + Environment.NewLine;
+                            var bytes = System.Text.Encoding.ASCII.GetBytes(s);
+                            fileStream.Write(bytes, 0, bytes.Length);
+                            written.Add(item.EntryId);
+
+                            // Check file size limit
+                            if (fileStream.Length >= MaxFileSize) break;
+                        }
+                    }
+                } while (written.Count < streamData.Count);
+            }
+            catch (Exception ex)
+            {
+                log.Trace(ex);
+            }
+
+            return written;
+        }
+
+        private List<T> ReadFromFile<T>(string path, int maxRecords)
+        {
+            if (File.Exists(path))
+            {
+                int readRecords = 0;
+
+                try
+                {
+                    var d = new List<T>();
+
+                    using (var f = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+                    using (var reader = new StreamReader(f))
+                    {
+                        // Read records from file
+                        while (!reader.EndOfStream && readRecords < maxRecords)
+                        {
+                            // Read record
+                            var line = reader.ReadLine();
+                            readRecords++;
+
+                            // Get object from Csv record
+                            var data = Csv.FromCsv<T>(line);
+                            if (data != null) d.Add(data);
+                        }
+                    }
+
+                    return d;
+                }
+                catch (Exception ex)
+                {
+                    log.Trace(ex);
+                }
+            }
+
+            return null;
+        }
+
+        private bool RemoveFromFile(string path, List<string> ids)
+        {
+            if (File.Exists(path))
+            {
+                var tempFile = Path.GetTempFileName();
+
+                try
+                {
+                    var d = new List<IStreamData>();
+
+                    using (var f = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite))
+                    using (var reader = new StreamReader(f))
+                    {
+                        // Read records from file
+                        while (!reader.EndOfStream)
+                        {
+                            var line = reader.ReadLine();
+
+                            var data = Csv.FromCsv<IStreamData>(line);
+                            if (data != null && !ids.Exists(o => o == data.EntryId))
+                            {
+                                d.Add(data);
+                            }
+                        }
+
+                        // Write un removed records back to file
+                        using (var writer = new StreamWriter(tempFile))
+                        {
+                            foreach (var data in d)
+                            {
+                                string csv = Csv.ToCsv(data);
+                                if (!string.IsNullOrEmpty(csv))
+                                {
+                                    writer.WriteLine(csv);
+                                }
+                            }
+                        }
+                    }
+
+                    File.Delete(path);
+                    if (d.Count > 0) File.Move(tempFile, path);
+
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    log.Trace(ex);
+                }
+            }
+
+            return false;
         }
 
         private string GetDirectory()
@@ -98,74 +368,6 @@ namespace TrakHound.DataClient
             if (!string.IsNullOrEmpty(Hostname)) dir = Path.Combine(dir, ConvertToFileName(Hostname));
 
             return dir;
-        }
-
-        public void WriteCsv()
-        {
-            // List of data that was succesfully written to file
-            var l = new List<string>();
-
-            List<IStreamData> data;
-            lock (_lock) data = Data.ToList();
-            if (data != null && data.Count > 0)
-            {
-                // Write Agent Definitions
-                l.AddRange(WriteCsv(data.OfType<AgentDefinition>().ToList<IStreamData>(), StreamDataType.AGENT_DEFINITION));
-
-                // Write Component Defintions
-                l.AddRange(WriteCsv(data.OfType<ComponentDefinition>().ToList<IStreamData>(), StreamDataType.COMPONENT_DEFINITION));
-
-                // Write DataItem Defintions
-                l.AddRange(WriteCsv(data.OfType<DataItemDefinition>().ToList<IStreamData>(), StreamDataType.DATA_ITEM_DEFINITION));
-
-                // Write Device Defintions
-                l.AddRange(WriteCsv(data.OfType<DeviceDefinition>().ToList<IStreamData>(), StreamDataType.DEVICE_DEFINITION));
-
-                // Write Samples
-                l.AddRange(WriteCsv(data.OfType<Sample>().ToList<IStreamData>(), StreamDataType.SAMPLE));
-                
-
-                // Remove from List
-                lock (_lock)
-                {
-                    Data.RemoveAll(o => l.Contains(o.EntryId));
-                }
-            }
-        }
-
-        private List<string> WriteCsv(List<IStreamData> data, StreamDataType type)
-        {
-            var stored = new List<string>();
-
-            try
-            {
-                do
-                {
-                    string path = GetPath(type);
-
-                    // Start Append FileStream
-                    using (var fileStream = new FileStream(path, FileMode.Append, FileAccess.Write, FileShare.Write))
-                    {
-                        foreach (var item in data)
-                        {
-                            // Write CSV lines
-                            string s = Csv.ToCsv(item) + Environment.NewLine;
-                            var bytes = System.Text.Encoding.ASCII.GetBytes(s);
-                            fileStream.Write(bytes, 0, bytes.Length);
-                            stored.Add(item.EntryId);
-
-                            // Check file size limit
-                            if (fileStream.Length >= (MaxFileSize - BUFFER_FILE_PADDING)) break;
-                        }
-                    }
-                } while (stored.Count < data.Count);
-            }
-            catch (Exception ex)
-            {
-                log.Error(ex);
-            }
-
-            return stored;
         }
 
         private string GetPath(StreamDataType type)
@@ -215,12 +417,12 @@ namespace TrakHound.DataClient
                     var fileInfo = new FileInfo(path);
                     if (fileInfo != null)
                     {
-                        return fileInfo.Length < (MaxFileSize - BUFFER_FILE_PADDING);
+                        return fileInfo.Length < MaxFileSize;
                     }
                 }
                 catch (Exception ex)
                 {
-                    log.Error(ex);
+                    log.Trace(ex);
                 }
             }
 
@@ -243,155 +445,7 @@ namespace TrakHound.DataClient
                 if (i < c - 1) rt = rt + "_";
             }
             return rt;
-        }
-        
-        public List<T> ReadCsv<T>(int maxRecords)
-        {
-            int i = 0;
-
-            // Get list of Sample Buffer Files
-            var dir = GetDirectory();
-            if (System.IO.Directory.Exists(dir))
-            {
-                string f = null;
-
-                if (typeof(T) == typeof(AgentDefinition)) f = FILENAME_AGENT_DEFINITIONS;
-                else if (typeof(T) == typeof(ComponentDefinition)) f = FILENAME_COMPONENT_DEFINITIONS;
-                else if (typeof(T) == typeof(DataItemDefinition)) f = FILENAME_DATA_ITEM_DEFINITIONS;
-                else if (typeof(T) == typeof(DeviceDefinition)) f = FILENAME_DEVICE_DEFINITIONS;
-                else if (typeof(T) == typeof(Sample)) f = FILENAME_SAMPLES;
-
-                var buffers = System.IO.Directory.GetFiles(GetDirectory(), f + "*");
-                if (buffers != null)
-                {
-                    var data = new List<T>();
-
-                    // Read each Buffer file
-                    foreach (var buffer in buffers)
-                    {
-                        var s = ReadCsv<T>(buffer, maxRecords - i);
-                        if (s != null)
-                        {
-                            i += s.Count;
-                            data.AddRange(s);
-
-                            if (i >= s.Count) break;
-                        }
-                    }
-
-                    return data;
-                }
-            }
-
-            return null;
-        }
-
-        private List<T> ReadCsv<T>(string path, int maxRecords)
-        {
-            if (File.Exists(path))
-            {
-                int readRecords = 0;
-
-                try
-                {
-                    var d = new List<T>();
-
-                    using (var f = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
-                    using (var reader = new StreamReader(f))
-                    {
-                        // Read records from file
-                        while (!reader.EndOfStream && readRecords < maxRecords)
-                        {
-                            // Read record
-                            var line = reader.ReadLine();
-                            readRecords++;
-
-                            // Get object from Csv record
-                            var data = Csv.FromCsv<T>(line);
-                            if (data != null) d.Add(data);
-                        }
-                    }
-
-                    return d;
-                }
-                catch (Exception ex)
-                {
-                    log.Error(ex);
-                }
-            }
-
-            return null;
-        }
-
-
-        public bool Remove(List<string> ids)
-        {
-            // Get list of Sample Buffer Files
-            var buffers = System.IO.Directory.GetFiles(GetDirectory());
-            if (buffers != null)
-            {
-                // Read each Buffer file
-                foreach (var buffer in buffers)
-                {
-                    if (!Remove(buffer, ids)) return false;
-                }
-            }
-
-            return true;
-        }
-
-        public bool Remove(string path, List<string> ids)
-        {
-            if (File.Exists(path))
-            {
-                var tempFile = Path.GetTempFileName();
-
-                try
-                {
-                    var d = new List<IStreamData>();
-
-                    using (var f = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite))
-                    using (var reader = new StreamReader(f))
-                    {
-                        // Read records from file
-                        while (!reader.EndOfStream)
-                        {
-                            var line = reader.ReadLine();
-
-                            var data = Csv.FromCsv<IStreamData>(line);
-                            if (data != null && !ids.Exists(o => o == data.EntryId))
-                            {
-                                d.Add(data);
-                            }
-                        }
-
-                        // Write un removed records back to file
-                        using (var writer = new StreamWriter(tempFile))
-                        {
-                            foreach (var data in d)
-                            {
-                                string csv = Csv.ToCsv(data);
-                                if (!string.IsNullOrEmpty(csv))
-                                {
-                                    writer.WriteLine(csv);
-                                }
-                            }
-                        }
-                    }
-
-                    File.Delete(path);
-                    if (d.Count > 0) File.Move(tempFile, path);
-
-                    return true;
-                }
-                catch (Exception ex)
-                {
-                    log.Error(ex);
-                }
-            }
-
-            return false;
-        }
+        }      
 
     }
 }
