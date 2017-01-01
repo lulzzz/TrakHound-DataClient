@@ -1,4 +1,4 @@
-![TrakHound DataClient](dataclient-logo-100px.png)
+![TrakHound DataClient](dataclient-logo-02-75px.png)
 <br>
 <br>
 TrakHound DataClient reads MTConnect® streams and sends the data to TrakHound DataServers to be stored. 
