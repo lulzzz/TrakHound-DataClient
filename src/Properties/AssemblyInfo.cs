@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("TrakHound DataClient")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("TrakHound DataClient reads MTConnect® streams and sends the data to TrakHound DataServers to be stored.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("TrakHound Inc.")]
 [assembly: AssemblyProduct("TrakHound DataClient")]
