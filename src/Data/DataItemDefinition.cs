@@ -15,24 +15,26 @@ namespace TrakHound.DataClient.Data
             EntryId = Guid.NewGuid().ToString();
         }
 
-        public DataItemDefinition(string deviceId, DataItem dataItem)
+        public DataItemDefinition(string deviceId, DataItem dataItem, string agentInstanceId, DateTime timestamp)
         {
-            Init(deviceId, dataItem, null);
+            Init(deviceId, dataItem, null, agentInstanceId, timestamp);
         }
 
-        public DataItemDefinition(string deviceId, DataItem dataItem, string parentId)
+        public DataItemDefinition(string deviceId, DataItem dataItem, string parentId, string agentInstanceId, DateTime timestamp)
         {
-            Init(deviceId, dataItem, parentId);
+            Init(deviceId, dataItem, parentId, agentInstanceId, timestamp);
         }
 
-        private void Init(string deviceId, DataItem dataItem, string parentId)
+        private void Init(string deviceId, DataItem dataItem, string parentId, string agentInstanceId, DateTime timestamp)
         {
             // TrakHound Properties
             EntryId = Guid.NewGuid().ToString();
             DeviceId = deviceId;
             ParentId = parentId;
+            Timestamp = timestamp;
 
             // MTConnect Properties
+            AgentInstanceId = agentInstanceId;
             Id = dataItem.Id;
             Name = dataItem.Name;
             Catergory = dataItem.Category.ToString();

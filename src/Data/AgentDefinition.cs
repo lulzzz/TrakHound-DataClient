@@ -23,12 +23,12 @@ namespace TrakHound.DataClient.Data
             // TrakHound Properties
             EntryId = Guid.NewGuid().ToString();
             DeviceId = deviceId;
+            Timestamp = header.CreationTime;
 
             // MTConnect Properties
             InstanceId = header.InstanceId;
             Sender = header.Sender;
             Version = header.Version;
-            CreationTime = header.CreationTime;
             BufferSize = header.BufferSize;
             TestIndicator = header.TestIndicator;
         }

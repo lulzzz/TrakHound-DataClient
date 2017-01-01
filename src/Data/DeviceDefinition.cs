@@ -18,13 +18,15 @@ namespace TrakHound.DataClient.Data
             EntryId = Guid.NewGuid().ToString();
         }
 
-        public DeviceDefinition(string deviceId, MTConnectDevices.Device device)
+        public DeviceDefinition(string deviceId, MTConnectDevices.Device device, string agentInstanceId, DateTime timestamp)
         {
             // TrakHound Properties
             EntryId = Guid.NewGuid().ToString();
             DeviceId = deviceId;
+            Timestamp = timestamp;
 
             // MTConnect Properties
+            AgentInstanceId = agentInstanceId;
             Id = device.Id;
             Uuid = device.Uuid;
             Name = device.Name;

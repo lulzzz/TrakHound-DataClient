@@ -106,6 +106,8 @@ namespace TrakHound.DataClient
             // Start Buffer Thread if the Buffer is configured
             if (Buffer != null)
             {
+                Buffer.Start(Hostname);
+
                 bufferThread = new Thread(new ThreadStart(BufferWorker));
                 bufferThread.Start();
             }
@@ -124,17 +126,17 @@ namespace TrakHound.DataClient
         /// <summary>
         /// Send a single item to the DataServer
         /// </summary>
-        public void Add(IStreamData data)
+        public void Add(StreamData data)
         {
-            Add(new List<IStreamData>() { data });
+            Add(new List<StreamData>() { data });
         }
 
         /// <summary>
         /// Send a list of items to the DataServer
         /// </summary>
-        public void Add(List<IStreamData> data)
+        public void Add(List<StreamData> data)
         {
-            var added = new List<IStreamData>();
+            var added = new List<StreamData>();
 
             // Add any Definitions
             added.AddRange(data.OfType<AgentDefinition>().ToList());
@@ -189,7 +191,7 @@ namespace TrakHound.DataClient
 
             if (added.Count > 0)
             {
-                var sendList = new List<IStreamData>();
+                var sendList = new List<StreamData>();
 
                 if (Buffer != null)
                 {
@@ -225,13 +227,13 @@ namespace TrakHound.DataClient
             {
                 int maxRecords = 500;
 
-                var sendList = new List<IStreamData>();
+                var sendList = new List<StreamData>();
 
-                sendList.AddRange(Buffer.Read<AgentDefinition>(maxRecords - sendList.Count).ToList<IStreamData>());
-                sendList.AddRange(Buffer.Read<ComponentDefinition>(maxRecords - sendList.Count).ToList<IStreamData>());
-                sendList.AddRange(Buffer.Read<DataItemDefinition>(maxRecords - sendList.Count).ToList<IStreamData>());
-                sendList.AddRange(Buffer.Read<DeviceDefinition>(maxRecords - sendList.Count).ToList<IStreamData>());
-                sendList.AddRange(Buffer.Read<Sample>(maxRecords - sendList.Count).ToList<IStreamData>());
+                sendList.AddRange(Buffer.Read<AgentDefinition>(maxRecords - sendList.Count).ToList<StreamData>());
+                sendList.AddRange(Buffer.Read<ComponentDefinition>(maxRecords - sendList.Count).ToList<StreamData>());
+                sendList.AddRange(Buffer.Read<DataItemDefinition>(maxRecords - sendList.Count).ToList<StreamData>());
+                sendList.AddRange(Buffer.Read<DeviceDefinition>(maxRecords - sendList.Count).ToList<StreamData>());
+                sendList.AddRange(Buffer.Read<Sample>(maxRecords - sendList.Count).ToList<StreamData>());
 
                 if (sendList.Count > 0)
                 {
@@ -251,7 +253,7 @@ namespace TrakHound.DataClient
             log.Info(Hostname + " : " + successfulCount + " Items Sent Successfully");
         }
 
-        private void StreamClient_SendFailed(List<IStreamData> streamData)
+        private void StreamClient_SendFailed(List<StreamData> streamData)
         {
             if (Buffer != null)
             {

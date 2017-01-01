@@ -73,7 +73,7 @@ namespace TrakHound.DataClient
             }
         }
 
-        private int _interval;
+        private int _interval = -1;
         /// <summary>
         /// Gets the Name of the MTConnect Device. Read Only.
         /// </summary>

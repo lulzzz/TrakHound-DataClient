@@ -7,6 +7,9 @@ using System.Xml.Serialization;
 
 namespace TrakHound.DataClient.DeviceFinder
 {
+    /// <summary>
+    /// Range of IP Addresses
+    /// </summary>
     public class AddressRange
     {
         [XmlAttribute("minimum")]

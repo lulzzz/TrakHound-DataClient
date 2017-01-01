@@ -57,7 +57,7 @@ namespace TrakHound.DataClient
         [XmlIgnore]
         public string Hostname { get { return _hostname; } }
 
-        private List<IStreamData> data = new List<IStreamData>();
+        private List<StreamData> data = new List<StreamData>();
         private Thread thread;
         private ManualResetEvent stop;
         private object _lock = new object();
@@ -81,7 +81,6 @@ namespace TrakHound.DataClient
         /// <summary>
         /// Start the Buffer Read/Write thread
         /// </summary>
-        /// <param name="hostname"></param>
         public void Start(string hostname)
         {
             _hostname = hostname;
@@ -104,8 +103,7 @@ namespace TrakHound.DataClient
         /// <summary>
         /// Add a single StreamData item
         /// </summary>
-        /// <param name="streamData"></param>
-        public void Add(IStreamData streamData)
+        public void Add(StreamData streamData)
         {
             lock(_lock)
             {
@@ -116,8 +114,7 @@ namespace TrakHound.DataClient
         /// <summary>
         /// Add a list of StreamData items
         /// </summary>
-        /// <param name="streamData"></param>
-        public void Add(List<IStreamData> streamData)
+        public void Add(List<StreamData> streamData)
         {
             lock (_lock) 
             {
@@ -202,38 +199,38 @@ namespace TrakHound.DataClient
         private void WriteToFile()
         {
             // List of data that was succesfully written to file
-            var l = new List<string>();
+            var ids = new List<string>();
 
             // Create a temporary list (to not lock up original list)
-            List<IStreamData> temp;
+            List<StreamData> temp;
             lock (_lock) temp = data.ToList();
             if (temp != null && temp.Count > 0)
             {
                 // Write Agent Definitions
-                l.AddRange(WriteToFile(temp.OfType<AgentDefinition>().ToList<IStreamData>(), StreamDataType.AGENT_DEFINITION));
+                ids.AddRange(WriteToFile(temp.OfType<AgentDefinition>().ToList<StreamData>(), StreamDataType.AGENT_DEFINITION));
 
                 // Write Component Defintions
-                l.AddRange(WriteToFile(temp.OfType<ComponentDefinition>().ToList<IStreamData>(), StreamDataType.COMPONENT_DEFINITION));
+                ids.AddRange(WriteToFile(temp.OfType<ComponentDefinition>().ToList<StreamData>(), StreamDataType.COMPONENT_DEFINITION));
 
                 // Write DataItem Defintions
-                l.AddRange(WriteToFile(temp.OfType<DataItemDefinition>().ToList<IStreamData>(), StreamDataType.DATA_ITEM_DEFINITION));
+                ids.AddRange(WriteToFile(temp.OfType<DataItemDefinition>().ToList<StreamData>(), StreamDataType.DATA_ITEM_DEFINITION));
 
                 // Write Device Defintions
-                l.AddRange(WriteToFile(temp.OfType<DeviceDefinition>().ToList<IStreamData>(), StreamDataType.DEVICE_DEFINITION));
+                ids.AddRange(WriteToFile(temp.OfType<DeviceDefinition>().ToList<StreamData>(), StreamDataType.DEVICE_DEFINITION));
 
                 // Write Samples
-                l.AddRange(WriteToFile(temp.OfType<Sample>().ToList<IStreamData>(), StreamDataType.SAMPLE));
+                ids.AddRange(WriteToFile(temp.OfType<Sample>().ToList<StreamData>(), StreamDataType.SAMPLE));
 
 
                 // Remove from List
                 lock (_lock)
                 {
-                    data.RemoveAll(o => l.Contains(o.EntryId));
+                    data.RemoveAll(o => ids.Contains(o.EntryId));
                 }
             }
         }
 
-        private List<string> WriteToFile(List<IStreamData> streamData, StreamDataType type)
+        private List<string> WriteToFile(List<StreamData> streamData, StreamDataType type)
         {
             // Create a list with the list of EntryIds of each successfully written item
             var written = new List<string>();
@@ -315,7 +312,11 @@ namespace TrakHound.DataClient
 
                 try
                 {
-                    var d = new List<IStreamData>();
+                    Type t;
+
+                    string filename = Path.GetFileNameWithoutExtension(path);
+
+                    var d = new List<StreamData>();
 
                     using (var f = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite))
                     using (var reader = new StreamReader(f))
@@ -325,10 +326,17 @@ namespace TrakHound.DataClient
                         {
                             var line = reader.ReadLine();
 
-                            var data = Csv.FromCsv<IStreamData>(line);
-                            if (data != null && !ids.Exists(o => o == data.EntryId))
+                            StreamData item = null;
+
+                            if (filename.StartsWith(FILENAME_AGENT_DEFINITIONS)) item = Csv.FromCsv<AgentDefinition>(line);
+                            if (filename.StartsWith(FILENAME_DEVICE_DEFINITIONS)) item = Csv.FromCsv<DeviceDefinition>(line);
+                            if (filename.StartsWith(FILENAME_COMPONENT_DEFINITIONS)) item = Csv.FromCsv<ComponentDefinition>(line);
+                            if (filename.StartsWith(FILENAME_DATA_ITEM_DEFINITIONS)) item = Csv.FromCsv<DataItemDefinition>(line);
+                            if (filename.StartsWith(FILENAME_SAMPLES)) item = Csv.FromCsv<Sample>(line);
+
+                            if (item != null && !ids.Exists(o => o == item.EntryId))
                             {
-                                d.Add(data);
+                                d.Add(item);
                             }
                         }
 

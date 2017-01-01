@@ -6,6 +6,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Xml.Serialization;
 using TrakHound.DataClient.Data;
@@ -50,12 +51,16 @@ namespace TrakHound.DataClient.DataGroups
         [XmlArrayItem("DataGroup")]
         public List<string> IncludedDataGroups { get; set; }
 
-
+        /// <summary>
+        /// Check a Sample based on the DataGroup's filters
+        /// </summary>
+        /// <param name="sample">The Sample to check</param>
+        /// <returns>A boolean indicating whether or not the Sample passes the filters</returns>
         public bool CheckFilters(Sample sample)
         {
             string deviceId = sample.DeviceId;
 
-            var dataDefinition = DataClient.DataItemDefinitions.Find(o => o.DeviceId == deviceId && o.Id == sample.Id);
+            var dataDefinition = DataClient.DataItemDefinitions.ToList().Find(o => o.DeviceId == deviceId && o.Id == sample.Id);
             if (dataDefinition != null)
             {
                 bool match = false;
@@ -87,7 +92,7 @@ namespace TrakHound.DataClient.DataGroups
             return false;
         }
 
-        private bool CheckFilter(DataItemDefinition dataItemDefinition, string filter)
+        private static bool CheckFilter(DataItemDefinition dataItemDefinition, string filter)
         {
             if (!string.IsNullOrEmpty(filter))
             {
@@ -117,7 +122,7 @@ namespace TrakHound.DataClient.DataGroups
                             }
                             else
                             {
-                                var containerDefinition = DataClient.ComponentDefinitions.Find(o => o.DeviceId == deviceId && o.Id == id);
+                                var containerDefinition = DataClient.ComponentDefinitions.ToList().Find(o => o.DeviceId == deviceId && o.Id == id);
                                 if (containerDefinition != null)
                                 {
                                     id = containerDefinition.ParentId;

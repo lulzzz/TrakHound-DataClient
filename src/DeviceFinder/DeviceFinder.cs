@@ -1,33 +1,61 @@
-﻿using NLog;
-using System;
+﻿// Copyright (c) 2017 TrakHound Inc., All Rights Reserved.
+
+// This file is subject to the terms and conditions defined in
+// file 'LICENSE.txt', which is part of this source code package.
+
+using NLog;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Net;
+using System.Threading;
+using System.Xml;
 using System.Xml.Serialization;
 using TrakHound.MTConnectSniffer;
-using System.Xml;
-using System.Net;
 
 namespace TrakHound.DataClient.DeviceFinder
 {
+    /// <summary>
+    /// Handles finding new MTConnect Devices on a network
+    /// </summary>
     public class DeviceFinder
     {
         private static Logger log = LogManager.GetCurrentClassLogger();
 
         private Sniffer sniffer;
+        private Thread thread;
+        private ManualResetEvent stop;
 
-        [XmlElement("Ports")]
-        public PortRange Ports { get; set; }
-
-        [XmlElement("Addresses")]
-        public AddressRange Addresses { get; set; }
-
+        /// <summary>
+        /// Gets or Sets the interval at which the network is scanned for new MTConnect Devices
+        /// </summary>
         [XmlAttribute("scanInterval")]
         public int ScanInterval { get; set; }
 
+        /// <summary>
+        /// Range of Ports to scan
+        /// </summary>
+        [XmlElement("Ports")]
+        public PortRange Ports { get; set; }
+
+        /// <summary>
+        /// Range of IP Addresses to scan
+        /// </summary>
+        [XmlElement("Addresses")]
+        public AddressRange Addresses { get; set; }
+
+        /// <summary>
+        /// Raised when a new MTConnect Device is found on the network
+        /// </summary>
         public event Sniffer.DeviceHandler DeviceFound;
+
+        /// <summary>
+        /// Raised when all scanning has finished
+        /// </summary>
         public event Sniffer.RequestStatusHandler SearchCompleted;
 
+        /// <summary>
+        /// Start the DeviceFinder
+        /// </summary>
         public void Start()
         {
             sniffer = new Sniffer();
@@ -40,7 +68,34 @@ namespace TrakHound.DataClient.DeviceFinder
             var ips = GetAddressRange();
             if (ips != null) sniffer.AddressRange = ips;
 
-            sniffer.Start();
+            stop = new ManualResetEvent(false);
+
+            thread = new Thread(new ThreadStart(Worker));
+            thread.Start();
+        }
+
+        /// <summary>
+        /// Stop the DeviceFinder
+        /// </summary>
+        public void Stop()
+        {
+            if (stop != null) stop.Set();
+        }
+
+
+        private void Worker()
+        {
+            do
+            {
+                log.Info("Scanning Network for MTConnect Devices..");
+
+                // Start the MTConnectSniffer
+                sniffer.Start();
+
+                // Only repeat if ScanInterval is set
+                if (ScanInterval <= 0) break;
+
+            } while (!stop.WaitOne(ScanInterval, true));
         }
 
         private void Sniffer_DeviceFound(MTConnectDevice device)
@@ -128,7 +183,8 @@ namespace TrakHound.DataClient.DeviceFinder
             return null;
         }
 
-        private IPAddress[] GetIpAddressFromString(string[] strings)
+
+        private static IPAddress[] GetIpAddressFromString(string[] strings)
         {
             var l = new List<IPAddress>();
 

@@ -7,6 +7,9 @@ using System.Xml.Serialization;
 
 namespace TrakHound.DataClient.DeviceFinder
 {
+    /// <summary>
+    /// Range of TCP Ports
+    /// </summary>
     public class PortRange
     {
         [XmlAttribute("minimum")]

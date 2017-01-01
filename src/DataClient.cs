@@ -72,10 +72,10 @@ namespace TrakHound.DataClient
             var config = Configuration.Read(configPath);
             if (config != null)
             {
+                _configuration = config;
+
                 log.Info("Configuration file read from '" + configPath + "'");
                 log.Info("---------------------------");
-
-                LoadConfiguration(config);
             }
             else
             {
@@ -86,40 +86,56 @@ namespace TrakHound.DataClient
             }
         }
 
-        private void LoadConfiguration(Configuration config)
+        public void Start()
         {
-            _configuration = config;
-
             // Start Devices
-            foreach (var device in config.Devices)
+            foreach (var device in _configuration.Devices)
             {
-                device.AgentDefinitionsReceived += AgentDefinitionReceived;
-                device.DeviceDefinitionsReceived += DeviceDefinitionReceived;
-                device.ComponentDefinitionsReceived += ComponentDefinitionsReceived;
-                device.DataItemDefinitionsReceived += DataDefinitionsReceived;
-                device.SamplesReceived += SamplesReceived;
-                device.Start();
-
-                log.Info("Device Started : " + device.DeviceId + " : " + device.DeviceName + " : " + device.AgentUrl);
+                StartDevice(device);
             }
 
+            log.Info("---------------------------");
+
             // Start Data Servers
-            foreach (var dataServer in config.DataServers)
+            foreach (var dataServer in _configuration.DataServers)
             {
                 dataServer.Start();
                 log.Info("DataServer Started : " + dataServer.Name + " @ " + dataServer.Hostname);
             }
 
-            // Start Device Finder
-            if (config.DeviceFinder != null)
-            {
-                config.DeviceFinder.DeviceFound += DeviceFinder_DeviceFound;
-                config.DeviceFinder.SearchCompleted += DeviceFinder_SearchCompleted;
-                config.DeviceFinder.Start();
+            log.Info("---------------------------");
 
-                log.Info("Device Finder Started..");
+            // Start Device Finder
+            if (_configuration.DeviceFinder != null)
+            {
+                _configuration.DeviceFinder.DeviceFound += DeviceFinder_DeviceFound;
+                _configuration.DeviceFinder.SearchCompleted += DeviceFinder_SearchCompleted;
+                _configuration.DeviceFinder.Start();
+
+                if (_configuration.DeviceFinder.ScanInterval > 0)
+                {
+                    var interval = TimeSpan.FromMilliseconds(_configuration.DeviceFinder.ScanInterval);
+                    log.Info("Device Finder (Scan Interval = " + interval.ToString() + ") Started..");
+                }
+                else log.Info("Device Finder Started..");
+
+                log.Info("---------------------------");
             }
         }
+
+        public void Stop()
+        {
+            // Stop Devices
+            foreach (var device in _configuration.Devices) device.Stop();
+
+            // Stop DataServers
+            foreach (var dataServer in _configuration.DataServers) dataServer.Stop();
+
+            // Stop the Device Finder
+            var deviceFinder = _configuration.DeviceFinder;
+            if (deviceFinder != null) deviceFinder.Stop();
+        }
+
 
         private void DeviceFinder_SearchCompleted(long milliseconds)
         {
@@ -143,15 +159,24 @@ namespace TrakHound.DataClient
                 string url = string.Format("http://{0}:{1}", device.IpAddress, device.Port);
 
                 // Create a new Device and start it
-                var d = new Device();
-                d.DeviceId = deviceId;
-                d.AgentUrl = url;
-                d.DeviceName = device.DeviceName;
+                var d = new Device(deviceId, url, device.DeviceName);
                 Configuration.Devices.Add(d);
-                d.Start();
+                StartDevice(d);
 
                 log.Info("New Device Added : " + deviceId + " : " + device.DeviceName + " : " + url);
             }
+        }
+
+        private void StartDevice(Device device)
+        {
+            device.AgentDefinitionsReceived += AgentDefinitionReceived;
+            device.DeviceDefinitionsReceived += DeviceDefinitionReceived;
+            device.ComponentDefinitionsReceived += ComponentDefinitionsReceived;
+            device.DataItemDefinitionsReceived += DataDefinitionsReceived;
+            device.SamplesReceived += SamplesReceived;
+            device.Start();
+
+            log.Info("Device Started : " + device.DeviceId + " : " + device.DeviceName + " : " + device.AgentUrl);
         }
 
         private void AgentDefinitionReceived(AgentDefinition definition)
@@ -201,7 +226,7 @@ namespace TrakHound.DataClient
             // Send to DataServers
             foreach (var dataServer in Configuration.DataServers)
             {
-                dataServer.Add(definitions.ToList<IStreamData>());
+                dataServer.Add(definitions.ToList<StreamData>());
             }
         }
 
@@ -220,7 +245,7 @@ namespace TrakHound.DataClient
             // Send to DataServers
             foreach (var dataServer in Configuration.DataServers)
             {
-                dataServer.Add(definitions.ToList<IStreamData>());
+                dataServer.Add(definitions.ToList<StreamData>());
             }
         }
    
@@ -240,7 +265,7 @@ namespace TrakHound.DataClient
             // Send to DataServers
             foreach (var dataServer in Configuration.DataServers)
             {
-                dataServer.Add(samples.ToList<IStreamData>());
+                dataServer.Add(samples.ToList<StreamData>());
             }
         }
 
