@@ -39,10 +39,6 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="MTConnect-NET, Version=2.0.1.7322, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\MTConnect.NET.2.0.1.7322\lib\net40\MTConnect-NET.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="MTConnect-Sniffer, Version=1.1.1.5649, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>packages\MTConnect-Sniffer.1.1.1.5649\lib\net40\MTConnect-Sniffer.dll</HintPath>
       <Private>True</Private>
@@ -60,7 +56,9 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Configuration.Install" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Management" />
     <Reference Include="System.Net.IPNetwork, Version=2.0.3.0, Culture=neutral, PublicKeyToken=764160545cf0d618, processorArchitecture=MSIL">
       <HintPath>packages\IPNetwork2.2.0.3\lib\net40\System.Net.IPNetwork.dll</HintPath>
       <Private>True</Private>
@@ -82,7 +80,6 @@
     <Compile Include="Buffer.cs" />
     <Compile Include="Configuration.cs" />
     <Compile Include="Data\ComponentDefinition.cs" />
-    <None Include="ContainerType.cs" />
     <Compile Include="Data\DataItemDefinition.cs" />
     <Compile Include="DataGroups\CaptureMode.cs" />
     <Compile Include="DataGroups\DataGroup.cs" />
@@ -93,12 +90,17 @@
     <Compile Include="DataClient.cs" />
     <Compile Include="DeviceFinder\DeviceFinder.cs" />
     <Compile Include="DeviceFinder\PortRange.cs" />
-    <Compile Include="EpochJsonConverter.cs" />
-    <Compile Include="Service.cs">
+    <Compile Include="DataClientProjectInstaller.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="Service.Designer.cs">
-      <DependentUpon>Service.cs</DependentUpon>
+    <Compile Include="DataClientProjectInstaller.Designer.cs">
+      <DependentUpon>DataClientProjectInstaller.cs</DependentUpon>
+    </Compile>
+    <Compile Include="DataClientService.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="DataClientService.Designer.cs">
+      <DependentUpon>DataClientService.cs</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -117,12 +119,23 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\MTConnect.NET\src\MTConnect.NET.csproj">
+      <Project>{d7ece6e3-647d-4f74-b63e-c509153eb4b7}</Project>
+      <Name>MTConnect.NET</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\TrakHound-API\TrakHound-API\TrakHound-API\TrakHound-API.csproj">
       <Project>{721bf90b-e72e-4fdf-bb06-3945e25e6dbc}</Project>
       <Name>TrakHound-API</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <EmbeddedResource Include="DataClientProjectInstaller.resx">
+      <DependentUpon>DataClientProjectInstaller.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="DataClientService.resx">
+      <DependentUpon>DataClientService.cs</DependentUpon>
+    </EmbeddedResource>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
