@@ -9,7 +9,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Xml.Serialization;
-using TrakHound.DataClient.Data;
+using TrakHound.Api.v2.Data;
 
 namespace TrakHound.DataClient.DataGroups
 {

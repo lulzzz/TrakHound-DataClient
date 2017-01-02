@@ -8,9 +8,11 @@ using NLog;
 using System;
 using System.Collections.Generic;
 using System.Xml.Serialization;
+using MTConnect;
+using MTConnect.Types;
 using MTConnectDevices = MTConnect.MTConnectDevices;
 using MTConnectStreams = MTConnect.MTConnectStreams;
-using TrakHound.DataClient.Data;
+using TrakHound.Api.v2.Streams.Data;
 
 namespace TrakHound.DataClient
 {
@@ -176,32 +178,32 @@ namespace TrakHound.DataClient
                 DateTime timestamp = document.Header.CreationTime;
 
                 // Send Agent Definition
-                AgentDefinitionsReceived?.Invoke(new AgentDefinition(DeviceId, document.Header));
+                AgentDefinitionsReceived?.Invoke(Create(DeviceId, document.Header));
 
-                var dataItemDefinitions = new List<DataItemDefinition>();
-                var componentDefinitions = new List<ComponentDefinition>();
+                var dataItemDefinitions = new List<DataItemDefinitionData>();
+                var componentDefinitions = new List<ComponentDefinitionData>();
 
                 var device = document.Devices[0];
 
                 // Send Device Definition
-                DeviceDefinitionsReceived?.Invoke(new DeviceDefinition(DeviceId, device, agentInstanceId, timestamp));
+                DeviceDefinitionsReceived?.Invoke(Create(DeviceId, device, agentInstanceId, timestamp));
 
                 // Add Path DataItems
                 foreach (var item in device.DataItems)
                 {
-                    dataItemDefinitions.Add(new DataItemDefinition(DeviceId, item, device.Id, agentInstanceId, timestamp));
+                    dataItemDefinitions.Add(Create(DeviceId, item, device.Id, agentInstanceId, timestamp));
                 }
 
                 // Create a ContainerDefinition for each Component
                 foreach (var component in device.Components)
                 {
                     // Add Component Container
-                    componentDefinitions.Add(new ComponentDefinition(DeviceId, component, device.Id, agentInstanceId, timestamp));
+                    componentDefinitions.Add(Create(DeviceId, component, device.Id, agentInstanceId, timestamp));
 
                     // Add Path DataItems
                     foreach (var item in component.DataItems)
                     {
-                        dataItemDefinitions.Add(new DataItemDefinition(DeviceId, item, component.Id, agentInstanceId, timestamp));
+                        dataItemDefinitions.Add(Create(DeviceId, item, component.Id, agentInstanceId, timestamp));
                     }
 
                     // Process Axes Component
@@ -211,12 +213,12 @@ namespace TrakHound.DataClient
                         foreach (var axis in axes.Components)
                         {
                             // Add Axis Component
-                            componentDefinitions.Add(new ComponentDefinition(DeviceId, axis, component.Id, agentInstanceId, timestamp));
+                            componentDefinitions.Add(Create(DeviceId, axis, component.Id, agentInstanceId, timestamp));
 
                             // Add Path DataItems
                             foreach (var item in axis.DataItems)
                             {
-                                dataItemDefinitions.Add(new DataItemDefinition(DeviceId, item, axis.Id, agentInstanceId, timestamp));
+                                dataItemDefinitions.Add(Create(DeviceId, item, axis.Id, agentInstanceId, timestamp));
                             }
                         }
                     }
@@ -228,12 +230,12 @@ namespace TrakHound.DataClient
                         foreach (var path in controller.Components)
                         {
                             // Add Path Component
-                            componentDefinitions.Add(new ComponentDefinition(DeviceId, path, component.Id, agentInstanceId, timestamp));
+                            componentDefinitions.Add(Create(DeviceId, path, component.Id, agentInstanceId, timestamp));
 
                             // Add Path DataItems
                             foreach (var item in path.DataItems)
                             {
-                                dataItemDefinitions.Add(new DataItemDefinition(DeviceId, item, path.Id, agentInstanceId, timestamp));
+                                dataItemDefinitions.Add(Create(DeviceId, item, path.Id, agentInstanceId, timestamp));
                             }
                         }
                     }
@@ -247,23 +249,207 @@ namespace TrakHound.DataClient
             }
         }
 
+        //private void DevicesSuccessful(MTConnectDevices.Document document)
+        //{
+        //    log.Trace("MTConnect Devices Document Received @ " + DateTime.Now.ToString("o"));
+
+        //    if (document.Header != null && document.Devices != null && document.Devices.Count == 1)
+        //    {
+        //        string agentInstanceId = document.Header.InstanceId.ToString();
+        //        DateTime timestamp = document.Header.CreationTime;
+
+        //        // Send Agent Definition
+        //        AgentDefinitionsReceived?.Invoke(new AgentDefinition(DeviceId, document.Header));
+
+        //        var dataItemDefinitions = new List<DataItemDefinitionData>();
+        //        var componentDefinitions = new List<ComponentDefinitionData>();
+
+        //        var device = document.Devices[0];
+
+        //        // Send Device Definition
+        //        DeviceDefinitionsReceived?.Invoke(new DeviceDefinition(DeviceId, device, agentInstanceId, timestamp));
+
+        //        // Add Path DataItems
+        //        foreach (var item in device.DataItems)
+        //        {
+        //            dataItemDefinitions.Add(new DataItemDefinition(DeviceId, item, device.Id, agentInstanceId, timestamp));
+        //        }
+
+        //        // Create a ContainerDefinition for each Component
+        //        foreach (var component in device.Components)
+        //        {
+        //            // Add Component Container
+        //            componentDefinitions.Add(new ComponentDefinition(DeviceId, component, device.Id, agentInstanceId, timestamp));
+
+        //            // Add Path DataItems
+        //            foreach (var item in component.DataItems)
+        //            {
+        //                dataItemDefinitions.Add(new DataItemDefinition(DeviceId, item, component.Id, agentInstanceId, timestamp));
+        //            }
+
+        //            // Process Axes Component
+        //            if (component.GetType() == typeof(MTConnectDevices.Components.Axes))
+        //            {
+        //                var axes = (MTConnectDevices.Components.Axes)component;
+        //                foreach (var axis in axes.Components)
+        //                {
+        //                    // Add Axis Component
+        //                    componentDefinitions.Add(new ComponentDefinition(DeviceId, axis, component.Id, agentInstanceId, timestamp));
+
+        //                    // Add Path DataItems
+        //                    foreach (var item in axis.DataItems)
+        //                    {
+        //                        dataItemDefinitions.Add(new DataItemDefinition(DeviceId, item, axis.Id, agentInstanceId, timestamp));
+        //                    }
+        //                }
+        //            }
+
+        //            // Process Controller Component
+        //            if (component.GetType() == typeof(MTConnectDevices.Components.Controller))
+        //            {
+        //                var controller = (MTConnectDevices.Components.Controller)component;
+        //                foreach (var path in controller.Components)
+        //                {
+        //                    // Add Path Component
+        //                    componentDefinitions.Add(new ComponentDefinition(DeviceId, path, component.Id, agentInstanceId, timestamp));
+
+        //                    // Add Path DataItems
+        //                    foreach (var item in path.DataItems)
+        //                    {
+        //                        dataItemDefinitions.Add(new DataItemDefinition(DeviceId, item, path.Id, agentInstanceId, timestamp));
+        //                    }
+        //                }
+        //            }
+        //        }
+
+        //        // Send ContainerDefinition Objects
+        //        if (componentDefinitions.Count > 0) ComponentDefinitionsReceived?.Invoke(componentDefinitions);
+
+        //        // Send DataItemDefinition Objects
+        //        if (dataItemDefinitions.Count > 0) DataItemDefinitionsReceived?.Invoke(dataItemDefinitions);
+        //    }
+        //}
+
         private void StreamsSuccessful(MTConnectStreams.Document document)
         {
             log.Trace("MTConnect Streams Document Received @ " + DateTime.Now.ToString("o"));
 
             if (document.DeviceStreams != null && document.DeviceStreams.Count > 0)
             {
-                var samples = new List<Data.Sample>();
+                var samples = new List<SampleData>();
 
                 var deviceStream = document.DeviceStreams[0];
 
                 foreach (var dataItem in deviceStream.DataItems)
                 {
-                    samples.Add(new Data.Sample(DeviceId, dataItem));
+                    samples.Add(Create(DeviceId, dataItem));
                 }
 
                 if (samples.Count > 0) SamplesReceived?.Invoke(samples);
             }
+        }
+
+        private static AgentDefinitionData Create(string deviceId, MTConnect.Headers.MTConnectDevicesHeader header)
+        {
+            var obj = new AgentDefinitionData();
+
+            // TrakHound Properties
+            obj.DeviceId = deviceId;
+            obj.Timestamp = header.CreationTime;
+
+            // MTConnect Properties
+            obj.InstanceId = header.InstanceId;
+            obj.Sender = header.Sender;
+            obj.Version = header.Version;
+            obj.BufferSize = header.BufferSize;
+            obj.TestIndicator = header.TestIndicator;
+
+            return obj;
+        }
+
+        private static DeviceDefinitionData Create(string deviceId, MTConnectDevices.Device device, string agentInstanceId, DateTime timestamp)
+        {
+            var obj = new DeviceDefinitionData();
+
+            obj.DeviceId = deviceId;
+            obj.Timestamp = timestamp;
+
+            // MTConnect Properties
+            obj.AgentInstanceId = agentInstanceId;
+            obj.Id = device.Id;
+            obj.Uuid = device.Uuid;
+            obj.Name = device.Name;
+            obj.NativeName = device.NativeName;
+            obj.SampleInterval = device.SampleInterval;
+            obj.SampleRate = device.SampleRate;
+            obj.Iso841Class = device.Iso841Class;
+
+            return obj;
+        }
+
+        private static ComponentDefinitionData Create(string deviceId, MTConnectDevices.IComponent component, string parentId, string agentInstanceId, DateTime timestamp)
+        {
+            var obj = new ComponentDefinitionData();
+
+            // TrakHound Properties
+            obj.DeviceId = deviceId;
+            obj.ParentId = parentId;
+            obj.Timestamp = timestamp;
+
+            // MTConnect Properties
+            obj.AgentInstanceId = agentInstanceId;
+            obj.Component = component.GetType().Name;
+            obj.Id = component.Id;
+            obj.Uuid = component.Uuid;
+            obj.Name = component.Name;
+            obj.NativeName = component.NativeName;
+            obj.SampleInterval = component.SampleInterval;
+            obj.SampleRate = component.SampleRate;
+
+            return obj;
+        }
+
+        private static DataItemDefinitionData Create(string deviceId, MTConnectDevices.DataItem dataItem, string parentId, string agentInstanceId, DateTime timestamp)
+        {
+            var obj = new DataItemDefinitionData();
+
+            // TrakHound Properties
+            obj.DeviceId = deviceId;
+            obj.ParentId = parentId;
+            obj.Timestamp = timestamp;
+
+            // MTConnect Properties
+            obj.AgentInstanceId = agentInstanceId;
+            obj.Id = dataItem.Id;
+            obj.Name = dataItem.Name;
+            obj.Catergory = dataItem.Category.ToString();
+            obj.Type = dataItem.Type;
+            obj.SubType = dataItem.SubType;
+            obj.Statistic = dataItem.Statistic;
+            obj.Units = dataItem.Units;
+            obj.NativeUnits = dataItem.NativeUnits;
+            obj.NativeScale = dataItem.NativeScale;
+            obj.CoordinateSystem = dataItem.CoordinateSystem;
+            obj.SampleRate = dataItem.SampleRate;
+            obj.Representation = dataItem.Representation;
+            obj.SignificantDigits = dataItem.SignificantDigits;
+
+            return obj;
+        }
+
+        private static SampleData Create(string deviceId, MTConnectStreams.DataItem dataItem)
+        {
+            var obj = new SampleData();
+
+            obj.DeviceId = deviceId;
+
+            obj.Id = dataItem.DataItemId;
+            obj.Sequence = dataItem.Sequence;
+            obj.Timestamp = dataItem.Timestamp;
+            obj.CDATA = dataItem.CDATA;
+            if (dataItem.Category == DataItemCategory.CONDITION) obj.Condition = ((MTConnectStreams.Condition)dataItem).ConditionValue.ToString();
+
+            return obj;
         }
     }
 }

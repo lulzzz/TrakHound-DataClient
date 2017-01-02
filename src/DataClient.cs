@@ -13,7 +13,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using TrakHound.Api.v2.Streams;
-using TrakHound.DataClient.Data;
+using TrakHound.Api.v2.Streams.Data;
 
 namespace TrakHound.DataClient
 {
@@ -27,35 +27,35 @@ namespace TrakHound.DataClient
         private object _lock = new object();
 
 
-        private static List<AgentDefinition> _agentDefinitions = new List<AgentDefinition>();
+        private static List<AgentDefinitionData> _agentDefinitions = new List<AgentDefinitionData>();
         /// <summary>
         /// Gets a list of current AgentDefinitions that have been read. Read Only.
         /// </summary>
-        public static ReadOnlyCollection<AgentDefinition> AgentDefinitions { get { return _agentDefinitions.AsReadOnly(); } }
+        public static ReadOnlyCollection<AgentDefinitionData> AgentDefinitions { get { return _agentDefinitions.AsReadOnly(); } }
 
-        private static List<DeviceDefinition> _deviceDefinitions = new List<DeviceDefinition>();
+        private static List<DeviceDefinitionData> _deviceDefinitions = new List<DeviceDefinitionData>();
         /// <summary>
         /// Gets a list of current DeviceDefinitions that have been read. Read Only.
         /// </summary>
-        public static ReadOnlyCollection<DeviceDefinition> DeviceDefinitions { get { return _deviceDefinitions.AsReadOnly(); } }
+        public static ReadOnlyCollection<DeviceDefinitionData> DeviceDefinitions { get { return _deviceDefinitions.AsReadOnly(); } }
 
-        private static List<ComponentDefinition> _componentDefinitions = new List<ComponentDefinition>();
+        private static List<ComponentDefinitionData> _componentDefinitions = new List<ComponentDefinitionData>();
         /// <summary>
         /// Gets a list of current ComponentDefinitions that have been read. Read Only.
         /// </summary>
-        public static ReadOnlyCollection<ComponentDefinition> ComponentDefinitions { get { return _componentDefinitions.AsReadOnly(); } }
+        public static ReadOnlyCollection<ComponentDefinitionData> ComponentDefinitions { get { return _componentDefinitions.AsReadOnly(); } }
 
-        private static List<DataItemDefinition> _dataItemDefinitions = new List<DataItemDefinition>();
+        private static List<DataItemDefinitionData> _dataItemDefinitions = new List<DataItemDefinitionData>();
         /// <summary>
         /// Gets a list of current DataItemDefinitions that have been read. Read Only.
         /// </summary>
-        public static ReadOnlyCollection<DataItemDefinition> DataItemDefinitions { get { return _dataItemDefinitions.AsReadOnly(); } }
+        public static ReadOnlyCollection<DataItemDefinitionData> DataItemDefinitions { get { return _dataItemDefinitions.AsReadOnly(); } }
 
-        private static List<Sample> _samples = new List<Sample>();
+        private static List<SampleData> _samples = new List<SampleData>();
         /// <summary>
         /// Gets a list of current Samples that have been read. Similar to the MTConnect Current request. Read Only.
         /// </summary>
-        public static ReadOnlyCollection<Sample> Samples { get { return _samples.AsReadOnly(); } }
+        public static ReadOnlyCollection<SampleData> Samples { get { return _samples.AsReadOnly(); } }
 
 
         private Configuration _configuration;
@@ -179,7 +179,7 @@ namespace TrakHound.DataClient
             log.Info("Device Started : " + device.DeviceId + " : " + device.DeviceName + " : " + device.AgentUrl);
         }
 
-        private void AgentDefinitionReceived(AgentDefinition definition)
+        private void AgentDefinitionReceived(AgentDefinitionData definition)
         {
             lock (_lock)
             {
@@ -195,7 +195,7 @@ namespace TrakHound.DataClient
             }
         }
 
-        private void DeviceDefinitionReceived(DeviceDefinition definition)
+        private void DeviceDefinitionReceived(DeviceDefinitionData definition)
         {
             lock (_lock)
             {
@@ -211,7 +211,7 @@ namespace TrakHound.DataClient
             }
         }
 
-        private void ComponentDefinitionsReceived(List<ComponentDefinition> definitions)
+        private void ComponentDefinitionsReceived(List<ComponentDefinitionData> definitions)
         {
             foreach (var definition in definitions)
             {
@@ -226,11 +226,11 @@ namespace TrakHound.DataClient
             // Send to DataServers
             foreach (var dataServer in Configuration.DataServers)
             {
-                dataServer.Add(definitions.ToList<StreamData>());
+                dataServer.Add(definitions.ToList<IStreamData>());
             }
         }
 
-        private void DataDefinitionsReceived(List<DataItemDefinition> definitions)
+        private void DataDefinitionsReceived(List<DataItemDefinitionData> definitions)
         {
             foreach (var definition in definitions)
             {
@@ -245,11 +245,11 @@ namespace TrakHound.DataClient
             // Send to DataServers
             foreach (var dataServer in Configuration.DataServers)
             {
-                dataServer.Add(definitions.ToList<StreamData>());
+                dataServer.Add(definitions.ToList<IStreamData>());
             }
         }
    
-        private void SamplesReceived(List<Sample> samples)
+        private void SamplesReceived(List<SampleData> samples)
         {
             // Update Current Samples
             foreach (var sample in samples)
@@ -265,7 +265,7 @@ namespace TrakHound.DataClient
             // Send to DataServers
             foreach (var dataServer in Configuration.DataServers)
             {
-                dataServer.Add(samples.ToList<StreamData>());
+                dataServer.Add(samples.ToList<IStreamData>());
             }
         }
 

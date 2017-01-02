@@ -39,6 +39,10 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="MTConnect-NET, Version=2.0.2.11350, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\MTConnect.NET.2.0.2.11350\lib\net40\MTConnect-NET.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="MTConnect-Sniffer, Version=1.1.1.5649, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>packages\MTConnect-Sniffer.1.1.1.5649\lib\net40\MTConnect-Sniffer.dll</HintPath>
       <Private>True</Private>
@@ -74,16 +78,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Csv.cs" />
-    <Compile Include="Data\AgentDefinition.cs" />
-    <Compile Include="Data\DeviceDefinition.cs" />
     <Compile Include="DeviceFinder\AddressRange.cs" />
     <Compile Include="Buffer.cs" />
     <Compile Include="Configuration.cs" />
-    <Compile Include="Data\ComponentDefinition.cs" />
-    <Compile Include="Data\DataItemDefinition.cs" />
     <Compile Include="DataGroups\CaptureMode.cs" />
     <Compile Include="DataGroups\DataGroup.cs" />
-    <Compile Include="Data\Sample.cs" />
     <Compile Include="DataServer.cs" />
     <Compile Include="Delegates.cs" />
     <Compile Include="Device.cs" />
@@ -119,10 +118,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\MTConnect.NET\src\MTConnect.NET.csproj">
-      <Project>{d7ece6e3-647d-4f74-b63e-c509153eb4b7}</Project>
-      <Name>MTConnect.NET</Name>
-    </ProjectReference>
     <ProjectReference Include="..\..\TrakHound-API\TrakHound-API\TrakHound-API\TrakHound-API.csproj">
       <Project>{721bf90b-e72e-4fdf-bb06-3945e25e6dbc}</Project>
       <Name>TrakHound-API</Name>

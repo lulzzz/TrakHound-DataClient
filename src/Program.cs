@@ -62,10 +62,7 @@ namespace TrakHound.DataClient
                 try
                 {
                     // Start as Service
-                    ServiceBase.Run(new ServiceBase[]
-                    {
-                    new DataClientService()
-                    });
+                    ServiceBase.Run(new DataClientService());
                 }
                 catch (Exception ex)
                 {

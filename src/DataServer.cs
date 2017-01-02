@@ -9,7 +9,7 @@ using System.Linq;
 using System.Threading;
 using System.Xml.Serialization;
 using TrakHound.Api.v2.Streams;
-using TrakHound.DataClient.Data;
+using TrakHound.Api.v2.Streams.Data;
 using TrakHound.DataClient.DataGroups;
 
 namespace TrakHound.DataClient
@@ -126,29 +126,29 @@ namespace TrakHound.DataClient
         /// <summary>
         /// Send a single item to the DataServer
         /// </summary>
-        public void Add(StreamData data)
+        public void Add(IStreamData data)
         {
-            Add(new List<StreamData>() { data });
+            Add(new List<IStreamData>() { data });
         }
 
         /// <summary>
         /// Send a list of items to the DataServer
         /// </summary>
-        public void Add(List<StreamData> data)
+        public void Add(List<IStreamData> data)
         {
-            var added = new List<StreamData>();
+            var added = new List<IStreamData>();
 
             // Add any Definitions
-            added.AddRange(data.OfType<AgentDefinition>().ToList());
-            added.AddRange(data.OfType<ComponentDefinition>().ToList());
-            added.AddRange(data.OfType<DataItemDefinition>().ToList());
-            added.AddRange(data.OfType<DeviceDefinition>().ToList());
+            added.AddRange(data.OfType<AgentDefinitionData>().ToList());
+            added.AddRange(data.OfType<ComponentDefinitionData>().ToList());
+            added.AddRange(data.OfType<DataItemDefinitionData>().ToList());
+            added.AddRange(data.OfType<DeviceDefinitionData>().ToList());
 
             // Add Samples using the configured Filters
-            var samples = data.OfType<Sample>().ToList();
+            var samples = data.OfType<SampleData>().ToList();
             if (samples != null)
             {
-                var sampleSendList = new List<Sample>();
+                var sampleSendList = new List<SampleData>();
 
                 foreach (var dataGroup in DataGroups)
                 {
@@ -191,7 +191,7 @@ namespace TrakHound.DataClient
 
             if (added.Count > 0)
             {
-                var sendList = new List<StreamData>();
+                var sendList = new List<IStreamData>();
 
                 if (Buffer != null)
                 {
@@ -227,13 +227,13 @@ namespace TrakHound.DataClient
             {
                 int maxRecords = 500;
 
-                var sendList = new List<StreamData>();
+                var sendList = new List<IStreamData>();
 
-                sendList.AddRange(Buffer.Read<AgentDefinition>(maxRecords - sendList.Count).ToList<StreamData>());
-                sendList.AddRange(Buffer.Read<ComponentDefinition>(maxRecords - sendList.Count).ToList<StreamData>());
-                sendList.AddRange(Buffer.Read<DataItemDefinition>(maxRecords - sendList.Count).ToList<StreamData>());
-                sendList.AddRange(Buffer.Read<DeviceDefinition>(maxRecords - sendList.Count).ToList<StreamData>());
-                sendList.AddRange(Buffer.Read<Sample>(maxRecords - sendList.Count).ToList<StreamData>());
+                sendList.AddRange(Buffer.Read<AgentDefinitionData>(maxRecords - sendList.Count).ToList<IStreamData>());
+                sendList.AddRange(Buffer.Read<ComponentDefinitionData>(maxRecords - sendList.Count).ToList<IStreamData>());
+                sendList.AddRange(Buffer.Read<DataItemDefinitionData>(maxRecords - sendList.Count).ToList<IStreamData>());
+                sendList.AddRange(Buffer.Read<DeviceDefinitionData>(maxRecords - sendList.Count).ToList<IStreamData>());
+                sendList.AddRange(Buffer.Read<SampleData>(maxRecords - sendList.Count).ToList<IStreamData>());
 
                 if (sendList.Count > 0)
                 {
@@ -253,7 +253,7 @@ namespace TrakHound.DataClient
             log.Info(Hostname + " : " + successfulCount + " Items Sent Successfully");
         }
 
-        private void StreamClient_SendFailed(List<StreamData> streamData)
+        private void StreamClient_SendFailed(List<IStreamData> streamData)
         {
             if (Buffer != null)
             {

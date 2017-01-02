@@ -33,6 +33,7 @@
             // 
             // DataClientProcessInstaller
             // 
+            this.DataClientProcessInstaller.Account = System.ServiceProcess.ServiceAccount.LocalSystem;
             this.DataClientProcessInstaller.Password = null;
             this.DataClientProcessInstaller.Username = null;
             this.DataClientProcessInstaller.AfterInstall += new System.Configuration.Install.InstallEventHandler(this.DataClientProcessInstaller_AfterInstall);
@@ -44,7 +45,7 @@
             this.DataClientServiceInstaller.StartType = System.ServiceProcess.ServiceStartMode.Automatic;
             this.DataClientServiceInstaller.AfterInstall += new System.Configuration.Install.InstallEventHandler(this.DataClientServiceInstaller_AfterInstall);
             // 
-            // ProjectInstaller
+            // DataClientProjectInstaller
             // 
             this.Installers.AddRange(new System.Configuration.Install.Installer[] {
             this.DataClientProcessInstaller,

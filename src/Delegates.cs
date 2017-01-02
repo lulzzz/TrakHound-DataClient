@@ -4,17 +4,17 @@
 // file 'LICENSE.txt', which is part of this source code package.
 
 using System.Collections.Generic;
-using TrakHound.DataClient.Data;
+using TrakHound.Api.v2.Streams.Data;
 
 namespace TrakHound.DataClient
 {
-    public delegate void AgentDefinitionsHandler(AgentDefinition definition);
+    public delegate void AgentDefinitionsHandler(AgentDefinitionData definition);
 
-    public delegate void ComponentDefinitionsHandler(List<ComponentDefinition> definitions);
+    public delegate void ComponentDefinitionsHandler(List<ComponentDefinitionData> definitions);
 
-    public delegate void DataItemDefinitionsHandler(List<DataItemDefinition> definitions);
+    public delegate void DataItemDefinitionsHandler(List<DataItemDefinitionData> definitions);
 
-    public delegate void DeviceDefinitionsHandler(DeviceDefinition definition);
+    public delegate void DeviceDefinitionsHandler(DeviceDefinitionData definition);
 
-    public delegate void SamplesHandler(List<Sample> samples);
+    public delegate void SamplesHandler(List<SampleData> samples);
 }

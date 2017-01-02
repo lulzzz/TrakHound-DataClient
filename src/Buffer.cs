@@ -12,7 +12,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Xml.Serialization;
 using TrakHound.Api.v2.Streams;
-using TrakHound.DataClient.Data;
+using TrakHound.Api.v2.Streams.Data;
 
 namespace TrakHound.DataClient
 {
@@ -57,7 +57,7 @@ namespace TrakHound.DataClient
         [XmlIgnore]
         public string Hostname { get { return _hostname; } }
 
-        private List<StreamData> data = new List<StreamData>();
+        private List<IStreamData> data = new List<IStreamData>();
         private Thread thread;
         private ManualResetEvent stop;
         private object _lock = new object();
@@ -103,7 +103,7 @@ namespace TrakHound.DataClient
         /// <summary>
         /// Add a single StreamData item
         /// </summary>
-        public void Add(StreamData streamData)
+        public void Add(IStreamData streamData)
         {
             lock(_lock)
             {
@@ -114,7 +114,7 @@ namespace TrakHound.DataClient
         /// <summary>
         /// Add a list of StreamData items
         /// </summary>
-        public void Add(List<StreamData> streamData)
+        public void Add(List<IStreamData> streamData)
         {
             lock (_lock) 
             {
@@ -137,11 +137,11 @@ namespace TrakHound.DataClient
             {
                 string f = null;
 
-                if (typeof(T) == typeof(AgentDefinition)) f = FILENAME_AGENT_DEFINITIONS;
-                else if (typeof(T) == typeof(ComponentDefinition)) f = FILENAME_COMPONENT_DEFINITIONS;
-                else if (typeof(T) == typeof(DataItemDefinition)) f = FILENAME_DATA_ITEM_DEFINITIONS;
-                else if (typeof(T) == typeof(DeviceDefinition)) f = FILENAME_DEVICE_DEFINITIONS;
-                else if (typeof(T) == typeof(Sample)) f = FILENAME_SAMPLES;
+                if (typeof(T) == typeof(AgentDefinitionData)) f = FILENAME_AGENT_DEFINITIONS;
+                else if (typeof(T) == typeof(ComponentDefinitionData)) f = FILENAME_COMPONENT_DEFINITIONS;
+                else if (typeof(T) == typeof(DataItemDefinitionData)) f = FILENAME_DATA_ITEM_DEFINITIONS;
+                else if (typeof(T) == typeof(DeviceDefinitionData)) f = FILENAME_DEVICE_DEFINITIONS;
+                else if (typeof(T) == typeof(SampleData)) f = FILENAME_SAMPLES;
 
                 var buffers = System.IO.Directory.GetFiles(GetDirectory(), f + "*");
                 if (buffers != null)
@@ -202,24 +202,24 @@ namespace TrakHound.DataClient
             var ids = new List<string>();
 
             // Create a temporary list (to not lock up original list)
-            List<StreamData> temp;
+            List<IStreamData> temp;
             lock (_lock) temp = data.ToList();
             if (temp != null && temp.Count > 0)
             {
                 // Write Agent Definitions
-                ids.AddRange(WriteToFile(temp.OfType<AgentDefinition>().ToList<StreamData>(), StreamDataType.AGENT_DEFINITION));
+                ids.AddRange(WriteToFile(temp.OfType<AgentDefinitionData>().ToList<IStreamData>(), StreamDataType.AGENT_DEFINITION));
 
                 // Write Component Defintions
-                ids.AddRange(WriteToFile(temp.OfType<ComponentDefinition>().ToList<StreamData>(), StreamDataType.COMPONENT_DEFINITION));
+                ids.AddRange(WriteToFile(temp.OfType<ComponentDefinitionData>().ToList<IStreamData>(), StreamDataType.COMPONENT_DEFINITION));
 
                 // Write DataItem Defintions
-                ids.AddRange(WriteToFile(temp.OfType<DataItemDefinition>().ToList<StreamData>(), StreamDataType.DATA_ITEM_DEFINITION));
+                ids.AddRange(WriteToFile(temp.OfType<DataItemDefinitionData>().ToList<IStreamData>(), StreamDataType.DATA_ITEM_DEFINITION));
 
                 // Write Device Defintions
-                ids.AddRange(WriteToFile(temp.OfType<DeviceDefinition>().ToList<StreamData>(), StreamDataType.DEVICE_DEFINITION));
+                ids.AddRange(WriteToFile(temp.OfType<DeviceDefinitionData>().ToList<IStreamData>(), StreamDataType.DEVICE_DEFINITION));
 
                 // Write Samples
-                ids.AddRange(WriteToFile(temp.OfType<Sample>().ToList<StreamData>(), StreamDataType.SAMPLE));
+                ids.AddRange(WriteToFile(temp.OfType<SampleData>().ToList<IStreamData>(), StreamDataType.SAMPLE));
 
 
                 // Remove from List
@@ -230,7 +230,7 @@ namespace TrakHound.DataClient
             }
         }
 
-        private List<string> WriteToFile(List<StreamData> streamData, StreamDataType type)
+        private List<string> WriteToFile(List<IStreamData> streamData, StreamDataType type)
         {
             // Create a list with the list of EntryIds of each successfully written item
             var written = new List<string>();
@@ -316,7 +316,7 @@ namespace TrakHound.DataClient
 
                     string filename = Path.GetFileNameWithoutExtension(path);
 
-                    var d = new List<StreamData>();
+                    var d = new List<IStreamData>();
 
                     using (var f = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite))
                     using (var reader = new StreamReader(f))
@@ -326,13 +326,13 @@ namespace TrakHound.DataClient
                         {
                             var line = reader.ReadLine();
 
-                            StreamData item = null;
+                            IStreamData item = null;
 
-                            if (filename.StartsWith(FILENAME_AGENT_DEFINITIONS)) item = Csv.FromCsv<AgentDefinition>(line);
-                            if (filename.StartsWith(FILENAME_DEVICE_DEFINITIONS)) item = Csv.FromCsv<DeviceDefinition>(line);
-                            if (filename.StartsWith(FILENAME_COMPONENT_DEFINITIONS)) item = Csv.FromCsv<ComponentDefinition>(line);
-                            if (filename.StartsWith(FILENAME_DATA_ITEM_DEFINITIONS)) item = Csv.FromCsv<DataItemDefinition>(line);
-                            if (filename.StartsWith(FILENAME_SAMPLES)) item = Csv.FromCsv<Sample>(line);
+                            if (filename.StartsWith(FILENAME_AGENT_DEFINITIONS)) item = Csv.FromCsv<AgentDefinitionData>(line);
+                            if (filename.StartsWith(FILENAME_DEVICE_DEFINITIONS)) item = Csv.FromCsv<DeviceDefinitionData>(line);
+                            if (filename.StartsWith(FILENAME_COMPONENT_DEFINITIONS)) item = Csv.FromCsv<ComponentDefinitionData>(line);
+                            if (filename.StartsWith(FILENAME_DATA_ITEM_DEFINITIONS)) item = Csv.FromCsv<DataItemDefinitionData>(line);
+                            if (filename.StartsWith(FILENAME_SAMPLES)) item = Csv.FromCsv<SampleData>(line);
 
                             if (item != null && !ids.Exists(o => o == item.EntryId))
                             {
