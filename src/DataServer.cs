@@ -152,15 +152,33 @@ namespace TrakHound.DataClient
 
                 foreach (var dataGroup in DataGroups)
                 {
-                    if (dataGroup.CaptureMode == CaptureMode.ACTIVE)
+                    if (dataGroup.CaptureMode != CaptureMode.INCLUDE)
                     {
                         var filtered = samples.FindAll(o => dataGroup.CheckFilters(o));
                         foreach (var sample in filtered)
                         {
-                            // Add to list if new
-                            if (!sampleSendList.Exists(o => o.DeviceId == sample.DeviceId && o.Id == sample.Id && o.Timestamp >= sample.Timestamp))
+                            if (dataGroup.CaptureMode == CaptureMode.CURRENT)
                             {
-                                sampleSendList.Add(sample);
+                                sample.SetStreamDataType(StreamDataType.CURRENT_SAMPLE);
+
+                                // Find most current sample
+                                var currentSample = DataClient.Samples.ToList().Find(o => o.DeviceId == sample.DeviceId && o.Id == sample.Id);
+
+                                // Add to list if new
+                                if (!sampleSendList.Exists(o => o.DeviceId == currentSample.DeviceId && o.Id == currentSample.Id && o.Timestamp >= currentSample.Timestamp))
+                                {
+                                    sampleSendList.Add(currentSample);
+                                }
+                            }
+                            else
+                            {
+                                sample.SetStreamDataType(StreamDataType.ARCHIVED_SAMPLE);
+
+                                // Add to list if new
+                                if (!sampleSendList.Exists(o => o.DeviceId == sample.DeviceId && o.Id == sample.Id && o.Timestamp >= sample.Timestamp))
+                                {
+                                    sampleSendList.Add(sample);
+                                }
                             }
 
                             // Include other DataGroups
@@ -174,6 +192,8 @@ namespace TrakHound.DataClient
                                     var currentFiltered = DataClient.Samples.ToList().FindAll(o => group.CheckFilters(o));
                                     foreach (var currentSample in currentFiltered)
                                     {
+                                        currentSample.SetStreamDataType(StreamDataType.CURRENT_SAMPLE);
+
                                         // Add to list if new
                                         if (!sampleSendList.Exists(o => o.DeviceId == currentSample.DeviceId && o.Id == currentSample.Id && o.Timestamp >= currentSample.Timestamp))
                                         {
@@ -202,7 +222,7 @@ namespace TrakHound.DataClient
                     if (added.Count > MAX_SEND_COUNT)
                     {
                         var bufferList = added.GetRange(MAX_SEND_COUNT, added.Count - MAX_SEND_COUNT);
-                        Buffer.Add(bufferList);
+                        Buffer.Add(bufferList.FindAll(o => o.StreamDataType != StreamDataType.CURRENT_SAMPLE));
                         log.Info(Hostname + " : " + bufferList.Count + " Added to Buffer. Exceeded Max Send Count.");
                     }
                 }
@@ -257,7 +277,7 @@ namespace TrakHound.DataClient
         {
             if (Buffer != null)
             {
-                Buffer.Add(streamData);
+                Buffer.Add(streamData.FindAll(o => o.StreamDataType != StreamDataType.CURRENT_SAMPLE));
                 log.Warn(Hostname + " : " + streamData.Count + " Failed to Send. Added to Buffer");
             }
             else

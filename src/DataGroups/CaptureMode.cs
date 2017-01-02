@@ -13,11 +13,16 @@ namespace TrakHound.DataClient.DataGroups
         /// <summary>
         /// Only capture data when included in another DataGroup
         /// </summary>
-        PASSIVE,
+        INCLUDE,
 
         /// <summary>
-        /// Always capture data
+        /// Only capture the most current data
         /// </summary>
-        ACTIVE
+        CURRENT,
+
+        /// <summary>
+        /// Capture all data and add to archive
+        /// </summary>
+        ARCHIVE
     }
 }

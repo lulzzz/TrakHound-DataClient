@@ -219,7 +219,7 @@ namespace TrakHound.DataClient
                 ids.AddRange(WriteToFile(temp.OfType<DeviceDefinitionData>().ToList<IStreamData>(), StreamDataType.DEVICE_DEFINITION));
 
                 // Write Samples
-                ids.AddRange(WriteToFile(temp.OfType<SampleData>().ToList<IStreamData>(), StreamDataType.SAMPLE));
+                ids.AddRange(WriteToFile(temp.OfType<SampleData>().ToList<IStreamData>(), StreamDataType.ARCHIVED_SAMPLE));
 
 
                 // Remove from List
@@ -388,7 +388,7 @@ namespace TrakHound.DataClient
                 case StreamDataType.COMPONENT_DEFINITION: file = FILENAME_COMPONENT_DEFINITIONS; break;
                 case StreamDataType.DATA_ITEM_DEFINITION: file = FILENAME_DATA_ITEM_DEFINITIONS; break;
                 case StreamDataType.DEVICE_DEFINITION: file = FILENAME_DEVICE_DEFINITIONS; break;
-                case StreamDataType.SAMPLE: file = FILENAME_SAMPLES; break;
+                case StreamDataType.ARCHIVED_SAMPLE: file = FILENAME_SAMPLES; break;
             }
 
             if (file != null)
