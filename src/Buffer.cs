@@ -11,6 +11,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Xml.Serialization;
+using TrakHound.Api.v2;
 using TrakHound.Api.v2.Streams;
 using TrakHound.Api.v2.Streams.Data;
 
@@ -57,7 +58,7 @@ namespace TrakHound.DataClient
         [XmlIgnore]
         public string Hostname { get { return _hostname; } }
 
-        private List<IStreamData> data = new List<IStreamData>();
+        private List<IStreamData> queue = new List<IStreamData>();
         private Thread thread;
         private ManualResetEvent stop;
         private object _lock = new object();
@@ -107,7 +108,7 @@ namespace TrakHound.DataClient
         {
             lock(_lock)
             {
-                data.Add(streamData);
+                queue.Add(streamData);
             }        
         }
 
@@ -118,7 +119,7 @@ namespace TrakHound.DataClient
         {
             lock (_lock) 
             {
-                data.AddRange(streamData);
+                queue.AddRange(streamData);
             }
         }
 
@@ -129,43 +130,43 @@ namespace TrakHound.DataClient
         /// <param name="maxRecords">Maximum number of items to read</param>
         public List<T> Read<T>(int maxRecords)
         {
-            int i = 0;
-
-            // Get list of Sample Buffer Files
-            var dir = GetDirectory();
-            if (System.IO.Directory.Exists(dir))
+            lock (_lock)
             {
-                string f = null;
+                var data = new List<T>();
+                int i = 0;
 
-                if (typeof(T) == typeof(AgentDefinitionData)) f = FILENAME_AGENT_DEFINITIONS;
-                else if (typeof(T) == typeof(ComponentDefinitionData)) f = FILENAME_COMPONENT_DEFINITIONS;
-                else if (typeof(T) == typeof(DataItemDefinitionData)) f = FILENAME_DATA_ITEM_DEFINITIONS;
-                else if (typeof(T) == typeof(DeviceDefinitionData)) f = FILENAME_DEVICE_DEFINITIONS;
-                else if (typeof(T) == typeof(SampleData)) f = FILENAME_SAMPLES;
-
-                var buffers = System.IO.Directory.GetFiles(GetDirectory(), f + "*");
-                if (buffers != null)
+                // Get list of Sample Buffer Files
+                var dir = GetDirectory();
+                if (System.IO.Directory.Exists(dir))
                 {
-                    var data = new List<T>();
+                    string f = null;
 
-                    // Read each Buffer file
-                    foreach (var buffer in buffers)
+                    if (typeof(T) == typeof(AgentDefinitionData)) f = FILENAME_AGENT_DEFINITIONS;
+                    else if (typeof(T) == typeof(ComponentDefinitionData)) f = FILENAME_COMPONENT_DEFINITIONS;
+                    else if (typeof(T) == typeof(DataItemDefinitionData)) f = FILENAME_DATA_ITEM_DEFINITIONS;
+                    else if (typeof(T) == typeof(DeviceDefinitionData)) f = FILENAME_DEVICE_DEFINITIONS;
+                    else if (typeof(T) == typeof(SampleData)) f = FILENAME_SAMPLES;
+
+                    var buffers = System.IO.Directory.GetFiles(GetDirectory(), f + "*");
+                    if (buffers != null)
                     {
-                        var s = ReadFromFile<T>(buffer, maxRecords - i);
-                        if (s != null)
+                        // Read each Buffer file
+                        foreach (var buffer in buffers)
                         {
-                            i += s.Count;
-                            data.AddRange(s);
+                            var s = ReadFromFile<T>(buffer, maxRecords - i);
+                            if (!s.IsNullOrEmpty())
+                            {
+                                i += s.Count;
+                                data.AddRange(s);
 
-                            if (i >= s.Count) break;
+                                if (i >= s.Count) break;
+                            }
                         }
                     }
-
-                    return data;
                 }
-            }
 
-            return null;
+                return data;
+            }
         }
 
         /// <summary>
@@ -203,8 +204,8 @@ namespace TrakHound.DataClient
 
             // Create a temporary list (to not lock up original list)
             List<IStreamData> temp;
-            lock (_lock) temp = data.ToList();
-            if (temp != null && temp.Count > 0)
+            lock (_lock) temp = queue.ToList();
+            if (!temp.IsNullOrEmpty())
             {
                 // Write Agent Definitions
                 ids.AddRange(WriteToFile(temp.OfType<AgentDefinitionData>().ToList<IStreamData>(), StreamDataType.AGENT_DEFINITION));
@@ -225,7 +226,7 @@ namespace TrakHound.DataClient
                 // Remove from List
                 lock (_lock)
                 {
-                    data.RemoveAll(o => ids.Contains(o.EntryId));
+                    queue.RemoveAll(o => ids.Contains(o.EntryId));
                 }
             }
         }
@@ -308,11 +309,9 @@ namespace TrakHound.DataClient
         {
             if (File.Exists(path))
             {
-                var tempFile = Path.GetTempFileName();
-
                 try
                 {
-                    Type t;
+                    var tempFile = Path.GetTempFileName();
 
                     string filename = Path.GetFileNameWithoutExtension(path);
 
