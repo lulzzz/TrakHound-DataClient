@@ -10,6 +10,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Xml.Serialization;
 using TrakHound.Api.v2.Data;
+using TrakHound.Api.v2.Streams.Data;
 
 namespace TrakHound.DataClient.DataGroups
 {
@@ -56,7 +57,7 @@ namespace TrakHound.DataClient.DataGroups
         /// </summary>
         /// <param name="sample">The Sample to check</param>
         /// <returns>A boolean indicating whether or not the Sample passes the filters</returns>
-        public bool CheckFilters(Sample sample)
+        public bool CheckFilters(SampleData sample)
         {
             string deviceId = sample.DeviceId;
 
@@ -102,7 +103,7 @@ namespace TrakHound.DataClient.DataGroups
                 if (paths != null)
                 {
                     string id = dataItemDefinition.ParentId;
-                    if (!string.IsNullOrEmpty(id))
+                    if (!string.IsNullOrEmpty(filter))
                     {
                         bool match = false;
 
@@ -122,12 +123,17 @@ namespace TrakHound.DataClient.DataGroups
                             }
                             else
                             {
-                                var containerDefinition = DataClient.ComponentDefinitions.ToList().Find(o => o.DeviceId == deviceId && o.Id == id);
-                                if (containerDefinition != null)
+                                var component = DataClient.ComponentDefinitions.ToList().Find(o => o.DeviceId == deviceId && o.Id == id);
+
+                                // Find if Direct Parent or if Descendant of path
+                                while (component != null)
                                 {
-                                    id = containerDefinition.ParentId;
-                                    match = NormalizeType(containerDefinition.Component) == NormalizeType(path);
-                                    if (!match) match = containerDefinition.Id == path;
+                                    id = component.ParentId;
+                                    match = component.Component == path;
+                                    if (!match) match = component.Id == path;
+                                    if (match) break;
+
+                                    component = DataClient.ComponentDefinitions.ToList().Find(o => o.DeviceId == deviceId && o.Id == id);
                                 }
                             }
 
@@ -141,7 +147,7 @@ namespace TrakHound.DataClient.DataGroups
             
             return false;
         }
-        
+
         private static string NormalizeType(string s)
         {
             string debug = s;
