@@ -40,12 +40,12 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="MTConnect-NET, Version=2.0.2.11350, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\MTConnect.NET.2.0.2.11350\lib\net40\MTConnect-NET.dll</HintPath>
-      <Private>True</Private>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\MTConnect.NET\src\bin\Release\MTConnect-NET.dll</HintPath>
     </Reference>
     <Reference Include="MTConnect-Sniffer, Version=1.1.1.5649, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\MTConnect-Sniffer.1.1.1.5649\lib\net40\MTConnect-Sniffer.dll</HintPath>
-      <Private>True</Private>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\MTConnect-Sniffer\src\bin\Release\MTConnect-Sniffer.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>packages\Newtonsoft.Json.9.0.1\lib\net40\Newtonsoft.Json.dll</HintPath>
