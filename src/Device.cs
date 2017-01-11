@@ -186,58 +186,24 @@ namespace TrakHound.DataClient
                 var device = document.Devices[0];
 
                 // Send Device Definition
-                DeviceDefinitionsReceived?.Invoke(Create(DeviceId, device, agentInstanceId, timestamp));
+                DeviceDefinitionsReceived?.Invoke(Create(DeviceId, device, agentInstanceId));
 
                 // Add Path DataItems
                 foreach (var item in device.DataItems)
                 {
-                    dataItemDefinitions.Add(Create(DeviceId, item, device.Id, agentInstanceId, timestamp));
+                    dataItemDefinitions.Add(Create(DeviceId, item, device.Id, agentInstanceId));
                 }
 
                 // Create a ContainerDefinition for each Component
-                foreach (var component in device.Components)
+                foreach (var component in device.GetComponents())
                 {
                     // Add Component Container
-                    componentDefinitions.Add(Create(DeviceId, component, device.Id, agentInstanceId, timestamp));
+                    componentDefinitions.Add(Create(DeviceId, component, device.Id, agentInstanceId));
 
-                    // Add Path DataItems
-                    foreach (var item in component.DataItems)
+                    // Add DataItems
+                    foreach (var dataItem in component.DataItems)
                     {
-                        dataItemDefinitions.Add(Create(DeviceId, item, component.Id, agentInstanceId, timestamp));
-                    }
-
-                    // Process Axes Component
-                    if (component.GetType() == typeof(MTConnectDevices.Components.Axes))
-                    {
-                        var axes = (MTConnectDevices.Components.Axes)component;
-                        foreach (var axis in axes.Components)
-                        {
-                            // Add Axis Component
-                            componentDefinitions.Add(Create(DeviceId, axis, component.Id, agentInstanceId, timestamp));
-
-                            // Add Path DataItems
-                            foreach (var item in axis.DataItems)
-                            {
-                                dataItemDefinitions.Add(Create(DeviceId, item, axis.Id, agentInstanceId, timestamp));
-                            }
-                        }
-                    }
-
-                    // Process Controller Component
-                    if (component.GetType() == typeof(MTConnectDevices.Components.Controller))
-                    {
-                        var controller = (MTConnectDevices.Components.Controller)component;
-                        foreach (var path in controller.Components)
-                        {
-                            // Add Path Component
-                            componentDefinitions.Add(Create(DeviceId, path, component.Id, agentInstanceId, timestamp));
-
-                            // Add Path DataItems
-                            foreach (var item in path.DataItems)
-                            {
-                                dataItemDefinitions.Add(Create(DeviceId, item, path.Id, agentInstanceId, timestamp));
-                            }
-                        }
+                        dataItemDefinitions.Add(Create(DeviceId, dataItem, component.Id, agentInstanceId));
                     }
                 }
 
@@ -286,12 +252,11 @@ namespace TrakHound.DataClient
             return obj;
         }
 
-        private static DeviceDefinitionData Create(string deviceId, MTConnectDevices.Device device, string agentInstanceId, DateTime timestamp)
+        private static DeviceDefinitionData Create(string deviceId, MTConnectDevices.Device device, string agentInstanceId)
         {
             var obj = new DeviceDefinitionData();
 
             obj.DeviceId = deviceId;
-            obj.Timestamp = timestamp;
 
             // MTConnect Properties
             obj.AgentInstanceId = agentInstanceId;
@@ -306,18 +271,17 @@ namespace TrakHound.DataClient
             return obj;
         }
 
-        private static ComponentDefinitionData Create(string deviceId, MTConnectDevices.IComponent component, string parentId, string agentInstanceId, DateTime timestamp)
+        private static ComponentDefinitionData Create(string deviceId, MTConnectDevices.Component component, string parentId, string agentInstanceId)
         {
             var obj = new ComponentDefinitionData();
 
             // TrakHound Properties
             obj.DeviceId = deviceId;
             obj.ParentId = parentId;
-            obj.Timestamp = timestamp;
 
             // MTConnect Properties
             obj.AgentInstanceId = agentInstanceId;
-            obj.Component = component.GetType().Name;
+            obj.Type = component.Type;
             obj.Id = component.Id;
             obj.Uuid = component.Uuid;
             obj.Name = component.Name;
@@ -328,14 +292,13 @@ namespace TrakHound.DataClient
             return obj;
         }
 
-        private static DataItemDefinitionData Create(string deviceId, MTConnectDevices.DataItem dataItem, string parentId, string agentInstanceId, DateTime timestamp)
+        private static DataItemDefinitionData Create(string deviceId, MTConnectDevices.DataItem dataItem, string parentId, string agentInstanceId)
         {
             var obj = new DataItemDefinitionData();
 
             // TrakHound Properties
             obj.DeviceId = deviceId;
             obj.ParentId = parentId;
-            obj.Timestamp = timestamp;
 
             // MTConnect Properties
             obj.AgentInstanceId = agentInstanceId;
