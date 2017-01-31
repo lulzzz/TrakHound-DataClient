@@ -194,13 +194,12 @@ namespace TrakHound.DataClient
                     dataItemDefinitions.Add(Create(DeviceId, item, device.Id, agentInstanceId));
                 }
 
-                // Create a ContainerDefinition for each Component
+                // Add Component Definitions
+                componentDefinitions.AddRange(GetComponents(DeviceId, device.Id, device.Components, agentInstanceId));
+
+                // Add Component DataItems
                 foreach (var component in device.GetComponents())
                 {
-                    // Add Component Container
-                    componentDefinitions.Add(Create(DeviceId, component, device.Id, agentInstanceId));
-
-                    // Add DataItems
                     foreach (var dataItem in component.DataItems)
                     {
                         dataItemDefinitions.Add(Create(DeviceId, dataItem, component.Id, agentInstanceId));
@@ -213,6 +212,19 @@ namespace TrakHound.DataClient
                 // Send DataItemDefinition Objects
                 if (dataItemDefinitions.Count > 0) DataItemDefinitionsReceived?.Invoke(dataItemDefinitions);
             }
+        }
+
+        private static List<ComponentDefinitionData> GetComponents(string deviceId, string parentId, MTConnectDevices.ComponentCollection components, string agentInstanceId)
+        {
+            var l = new List<ComponentDefinitionData>();
+
+            foreach (var component in components.Components)
+            {
+                l.Add(Create(deviceId, component, parentId, agentInstanceId));
+                l.AddRange(GetComponents(deviceId, component.Id, component.SubComponents, agentInstanceId));
+            }
+
+            return l;
         }
         
         private void StreamsSuccessful(MTConnectStreams.Document document)
