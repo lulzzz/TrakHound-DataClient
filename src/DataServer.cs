@@ -25,6 +25,9 @@ namespace TrakHound.DataClient
         /// </summary>
         private const int MAX_SEND_COUNT = 2000;
 
+        private const int BUFFER_READ_INTERVAL = 5000;
+        private const int MAX_BUFFER_READ_COUNT = 5000;
+
         private static Logger log = LogManager.GetCurrentClassLogger();
 
         private ManualResetEvent sendStop;
@@ -62,6 +65,12 @@ namespace TrakHound.DataClient
         }
 
         /// <summary>
+        /// Gets or Sets the port used to stream data to DataServer
+        /// </summary>
+        [XmlAttribute("port")]
+        public int Port { get; set; }
+
+        /// <summary>
         /// Gets or Sets whether to use SSL when connecting to the DataServer
         /// </summary>
         [XmlAttribute("useSSL")]
@@ -88,9 +97,16 @@ namespace TrakHound.DataClient
             }
         }
 
+        /// <summary>
+        /// Gets or Sets the API Key used to send data to the TrakHound Cloud
+        /// </summary>
+        [XmlAttribute("apiKey")]
+        public string ApiKey { get; set; }
+
         public DataServer()
         {
-            SendInterval = 5000;
+            SendInterval = 500;
+            Port = 8472;
         }
 
         /// <summary>
@@ -100,7 +116,7 @@ namespace TrakHound.DataClient
         {
             sendStop = new ManualResetEvent(false);
 
-            streamClient = new StreamClient(Hostname, 8472, UseSSL);
+            streamClient = new StreamClient(Hostname, Port, UseSSL);
             streamClient.SendFailed += StreamClient_SendFailed;
             streamClient.SendSuccessful += StreamClient_SendSuccessful;
             streamClient.Connected += StreamClient_Connected;
@@ -159,12 +175,14 @@ namespace TrakHound.DataClient
                 foreach (var sample in FilterSamples(samples, CaptureMode.ARCHIVE))
                 {
                     if (!sampleSendList.Exists(o => o.Id == sample.Id)) sampleSendList.Add(sample);
+                    log.Trace("ARCHIVE : " + sample.Id + " : " + sample.Timestamp + " : " + sample.CDATA + " : " + sample.Condition);
                 }
 
                 // Add Current DataGroups
                 foreach (var sample in FilterSamples(samples, CaptureMode.CURRENT))
                 {
                     if (!sampleSendList.Exists(o => o.Id == sample.Id)) sampleSendList.Add(sample);
+                    log.Trace("ARCHIVE : " + sample.Id + " : " + sample.Timestamp + " : " + sample.CDATA + " : " + sample.Condition);
                 }
 
                 added.AddRange(sampleSendList);
@@ -194,6 +212,12 @@ namespace TrakHound.DataClient
                     {
                         log.Warn(Hostname + " : " + (added.Count - MAX_SEND_COUNT) + " Added to Buffer. Exceeded Max Send Count. Configure a Buffer to not lose data!");
                     }
+                }
+
+                // Add the Api Key
+                if (!string.IsNullOrEmpty(ApiKey))
+                {
+                    foreach (var item in sendList) item.ApiKey = ApiKey;
                 }
 
                 // Send filtered Samples
@@ -255,7 +279,7 @@ namespace TrakHound.DataClient
             {
                 if (connected)
                 {
-                    int maxRecords = 500;
+                    int maxRecords = MAX_BUFFER_READ_COUNT;
 
                     var sendList = new List<IStreamData>();
 
@@ -276,7 +300,7 @@ namespace TrakHound.DataClient
                         Buffer.Remove(ids);
                     }
                 }              
-            } while (!sendStop.WaitOne(2000, true));
+            } while (!sendStop.WaitOne(BUFFER_READ_INTERVAL, true));
         }
 
         private void StreamClient_SendSuccessful(int successfulCount)
@@ -299,10 +323,12 @@ namespace TrakHound.DataClient
 
         private void StreamClient_Connected(object sender, System.EventArgs e)
         {
+            log.Warn("Connected to : " + Hostname);
             connected = true;
         }
         private void StreamClient_Disconnected(object sender, System.EventArgs e)
         {
+            log.Warn("Disconnected to : " + Hostname);
             connected = false;
         }
 

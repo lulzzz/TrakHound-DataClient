@@ -34,6 +34,12 @@ namespace TrakHound.DataClient
         public string Path { get { return _path; } }
 
         /// <summary>
+        /// Gets or Sets the ApiKey used to verify data at the DataServer
+        /// </summary>
+        [XmlElement("ApiKey")]
+        public string ApiKey { get; set; }
+
+        /// <summary>
         /// Gets or Sets the DeviceFinder to use for finding new MTConnect devices on the network
         /// </summary>
         [XmlElement("DeviceFinder")]
