@@ -80,6 +80,10 @@ namespace TrakHound.DataClient.DeviceFinder
         public void Stop()
         {
             if (stop != null) stop.Set();
+
+            if (sniffer != null) sniffer.Stop();
+
+            log.Info("Device Finder Stopped");
         }
 
 
