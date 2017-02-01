@@ -44,32 +44,30 @@ Configuration is read from the **client.conf** XML file in the following format:
 
   <!--List of configured MTConnect Devices to read from-->
   <Devices>
-    <Device deviceId="1234" deviceName="VMC-3Axis">http://agent.mtconnect.org</Device>
+    <Device deviceId="0307f8be-5be9-4c14-85a6-8a2a9c9223db" deviceName="VMC-3Axis" interval="500">http://agent.mtconnect.org</Device>
   </Devices>
 
   <!--Configuration for finding MTConnect Devices on the network-->
-  <DeviceFinder scanInterval="5000">
+  <DeviceFinder scanInterval="3600000">
     
     <!--Specify Port Range-->
     <Ports minimum="5000" maximum="5020"/>
-
-    <!--Specify Address Range-->
-    <Addresses minimum="192.168.1.100" maximum="192.168.1.120"/>
     
   </DeviceFinder>
     
   <!--Configuration for sending data to TrakHound DataServers-->
   <DataServers>
-    <DataServer hostname="192.168.1.15" useSSL="true">
+    
+    <DataServer hostname="192.168.1.15" port="8472" useSSL="true">
       
       <!--Data Buffer Directory to buffer failed transfers until sent successfully-->
-      <Buffer>c:\TrakHound\Buffers\</Buffer>
+      <Buffer>Buffers</Buffer>
       
       <!--Define the data to send to DataServer-->
       <DataGroups>
 
-        <!--Collect all data-->
-        <DataGroup name="all" captureMode="ACTIVE">
+        <!--All Data Items-->
+        <DataGroup name="all" captureMode="ARCHIVE">
           <Allow>
             <Filter>*</Filter>
           </Allow>
@@ -77,7 +75,7 @@ Configuration is read from the **client.conf** XML file in the following format:
 
       </DataGroups>
 
-    </DataServer>
+    </DataServer> 
     
   </DataServers>
   
@@ -89,7 +87,7 @@ List of configured MTConnect Devices to read from.
 
 ```xml
  <Devices>
-    <Device deviceId="1234" deviceName="VMC-3Axis">http://agent.mtconnect.org</Device>
+    <Device deviceId="0307f8be-5be9-4c14-85a6-8a2a9c9223db" deviceName="VMC-3Axis" interval="500">http://agent.mtconnect.org</Device>
     <Device deviceId="TY3FNQCZKM3R2V0WWI9H3AUISLW" deviceName="Haas_Device">http://192.168.1.198:5000</Device>
     <Device deviceId="KGI13AOQSUERHF1XVQSFWLDIBS" deviceName="OKUMA.Lathe">http://192.168.1.198:5001</Device>
     <Device deviceId="RVJGKEA9ZXUPUIGFVMTQP98L0UY" deviceName="OKUMA.Lathe">http://192.168.1.198:5006</Device>
@@ -100,7 +98,7 @@ List of configured MTConnect Devices to read from.
 
 #### Device ID 
 ###### *(XmlAttribute : deviceId)*
-The globally unique identifier for the device. When detected automatically, the Device ID is a hash of the device's DeviceName, port, and MAC address. The MAC address is used so that MTConnect Agents can use DHCP while still being identified as the same device.
+The globally unique identifier for the device. When detected automatically, the Device ID is a hash of the device's DeviceName, port, and MAC address. The MAC address is used so that MTConnect Agents can use DHCP while still being identified as the same device. If manually added, always use a GUID.
 
 #### Device Name
 ###### *(XmlAttribute : deviceName)*
@@ -144,7 +142,7 @@ Configuration for finding MTConnect Devices on the network. *If omitted, the net
   
 #### Scan Interval 
 ###### *(XmlAttribute : scanInterval)*
-The interval (in milliseconds) at which the network will be scanned for new devices. *If omitted, the network will only be scanned when the DataClient is initially started.*
+The interval (in milliseconds) at which the network will be scanned for new devices. *If omitted, the network will only be scanned when the DataClient is initially started.* *Note: If needed at all, it is recommended to keep this interval set high since the network will receive a Ping on all nodes which can lead to Anti-Virus/Security software flagging the application.*
   
 ### Ports
 Used to filter the ports to scan. *If omitted, the default port range of 5000 - 5010 will be used.*
@@ -189,13 +187,13 @@ Represents each TrakHound Data Server that data is sent to in order to be strore
     <DataServer hostname="192.168.1.15" port="8472" useSSL="true">
       
       <!--Data Buffer Directory to buffer failed transfers until sent successfully-->
-      <Buffer>c:\TrakHound\Buffers\</Buffer>
+      <Buffer>Buffers</Buffer>
       
       <!--Define the data to send to DataServer-->
       <DataGroups>
 
         <!--Collect ALL Data-->
-        <DataGroup name="all" captureMode="ACTIVE">
+        <DataGroup name="all" captureMode="ARCHIVE">
           <Allow>
             <Filter>*</Filter>
           </Allow>
@@ -220,9 +218,12 @@ The port to send data to the TrakHound Data Server on. *If omitted, the default 
 ###### *(XmlAttribute : useSSL)*
 The hostname of the TrakHound Data Server to send data to. *If omitted, the default of False will be used.*
 
+#### Api Key 
+###### *(XmlAttribute : apiKey)*
+The Api Key used to authenticate when using the TrakHound Cloud DataServer. An ApiKey will be assigned to your user account when created at www.TrakHound.com.
 
 ### Buffer
-Data Buffer Directory to buffer failed transfers until sent successfully. *If omitted, no buffer will be used and may result in "lost" data.*
+Data Buffer Directory (relative or absolute path) to buffer failed transfers until sent successfully. *If omitted, no buffer will be used and may result in "lost" data.*
 
 
 ### DataGroups
@@ -231,7 +232,7 @@ DataGroups allow configuration for what data is captured and sent to the DataSer
 ```xml
 <DataGroups>
     <!--Collect ALL Data-->
-    <DataGroup name="all" captureMode="ACTIVE">
+    <DataGroup name="all" captureMode="ARCHIVE">
         <Allow>
         <Filter>*</Filter>
         </Allow>
@@ -244,8 +245,9 @@ The identifier for the DataGroup. This is primarily used when the DataGroup is b
 
 #### CaptureMode
 The mode in when data is captured.
-  - ACTIVE : Always capture and send data defined in the DataGroup
-  - PASSIVE : Only capture and send when included in another DataGroup. This can be used for constantly changing data such as Axis Position to reduce the amount of data stored in the DataServer's database.
+  - ARCHIVE : Capture all data and add to DataServer's archived_samples table (permanent storage)
+  - CURRENT : Only capture the most current data. Similar to the MTConnect "Current" request. Can be used to minimize data storage space when only needing the current data. This data is stored in the DataServer's current_samples table.
+  - INCLUDE : Only capture data when included in another DataGroup using the "Include" list (see below).
   
 #### Allow
 A list of Types and Ids to capture. This can also include container paths with the wildcard character (*) to allow any types or ids within the container.
@@ -283,14 +285,14 @@ Watch for when new "Status" data items are received within a Controller componen
 
 ```xml
 <!--All Data Items-->
-<DataGroup name="all" captureMode="PASSIVE">
+<DataGroup name="all" captureMode="INCLUDE">
     <Allow>
     <Filter>*</Filter>
     </Allow>
 </DataGroup>
 
 <!--Device Status Data Group. Always send new data.-->
-<DataGroup name="status" captureMode="ACTIVE">
+<DataGroup name="status" captureMode="ARCHIVE">
     
     <!--List the allowed Filters-->
     <Allow>
@@ -314,11 +316,22 @@ Watch for when new "Status" data items are received within a Controller componen
 </DataGroup>
 ```
 
+##### Example 2 (Only Current data)
+Only collect the most current data. Can be used for 
+
+```xml
+<DataGroup name="current" captureMode="CURRENT">
+    <Allow>
+       <Filter>*</Filter>
+    </Allow>
+</DataGroup>
+```
+
 ##### Example 2
 Only collect data for a single DataItem with the type of "EXECUTION".
 
 ```xml
-<DataGroup name="execution" captureMode="ACTIVE">
+<DataGroup name="execution" captureMode="ARCHIVE">
     <Allow>
        <Filter>EXECUTION</Filter>
     </Allow>
@@ -329,7 +342,7 @@ Only collect data for a single DataItem with the type of "EXECUTION".
 Only collect axis data.
 
 ```xml
-<DataGroup name="axes" captureMode="ACTIVE">
+<DataGroup name="axes" captureMode="ARCHIVE">
     <Allow>
        <Filter>Axes/*</Filter>
     </Allow>
@@ -340,13 +353,13 @@ Only collect axis data.
 Only collect data when the DataItem of type EMEGENCY_STOP is changed. 
 
 ```xml
-<DataGroup name="all" captureMode="PASSIVE">
+<DataGroup name="all" captureMode="INCLUDE">
     <Allow>
        <Filter>*</Filter>
     </Allow>
 </DataGroup>
 
-<DataGroup name="estop" captureMode="ACTIVE">
+<DataGroup name="estop" captureMode="ARCHIVE">
     <Allow>
         <Filter>EmergencyStop</Filter>       
     </Allow>
