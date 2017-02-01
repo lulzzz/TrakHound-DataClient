@@ -44,7 +44,7 @@ Configuration is read from the **client.conf** XML file in the following format:
 
   <!--List of configured MTConnect Devices to read from-->
   <Devices>
-    <Device deviceId="0307f8be-5be9-4c14-85a6-8a2a9c9223db" deviceName="VMC-3Axis" interval="500">http://agent.mtconnect.org</Device>
+    <Device deviceId="0307f8be-5be9-4c14-85a6-8a2a9c9223db" deviceName="VMC-3Axis">http://agent.mtconnect.org</Device>
   </Devices>
 
   <!--Configuration for finding MTConnect Devices on the network-->
@@ -87,7 +87,7 @@ List of configured MTConnect Devices to read from.
 
 ```xml
  <Devices>
-    <Device deviceId="0307f8be-5be9-4c14-85a6-8a2a9c9223db" deviceName="VMC-3Axis" interval="500">http://agent.mtconnect.org</Device>
+    <Device deviceId="0307f8be-5be9-4c14-85a6-8a2a9c9223db" deviceName="VMC-3Axis">http://agent.mtconnect.org</Device>
     <Device deviceId="TY3FNQCZKM3R2V0WWI9H3AUISLW" deviceName="Haas_Device">http://192.168.1.198:5000</Device>
     <Device deviceId="KGI13AOQSUERHF1XVQSFWLDIBS" deviceName="OKUMA.Lathe">http://192.168.1.198:5001</Device>
     <Device deviceId="RVJGKEA9ZXUPUIGFVMTQP98L0UY" deviceName="OKUMA.Lathe">http://192.168.1.198:5006</Device>
@@ -107,6 +107,7 @@ The DeviceName of the MTConnect Device to read from
 #### Address
 ###### *(XmlText)*
 The base Url of the MTConnect Agent. Do not specify the Device Name in the url, instead specify it under the deviceName attribute.
+
 
 ## DeviceFinder 
 Configuration for finding MTConnect Devices on the network. *If omitted, the network will not be scanned and no devices will be automatically found or configured.*
