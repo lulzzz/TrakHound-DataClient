@@ -15,10 +15,7 @@ namespace TrakHound.DataClient
 {
     static class Program
     {
-        private const int ERROR_RETRY = 5000;
-
         private static Logger log = LogManager.GetCurrentClassLogger();
-        private static ManualResetEvent stop;
         private static DataClient client;
         
         /// <summary>
@@ -42,6 +39,8 @@ namespace TrakHound.DataClient
 
                         Start();
                         Console.ReadLine();
+                        Stop();
+                        Console.ReadLine();
                         break;
 
                     // Install the Service
@@ -59,18 +58,7 @@ namespace TrakHound.DataClient
             }
             else
             {
-                try
-                {
-                    // Start as Service
-                    ServiceBase.Run(new DataClientService());
-                }
-                catch (Exception ex)
-                {
-                    log.Error(ex);
-                    log.Info("TrakHound DataClient Error :: Restarting Server in 5 Seconds..");
-
-                    if (!stop.WaitOne(ERROR_RETRY, true)) Init(args);
-                }
+                ServiceBase.Run(new DataClientService());
             }
         }
 
@@ -86,8 +74,6 @@ namespace TrakHound.DataClient
 
         public static void Stop()
         {
-            if (stop != null) stop.Set();
-
             if (client != null) client.Stop();
         }
 
