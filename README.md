@@ -328,7 +328,7 @@ Only collect the most current data. Can be used for
 </DataGroup>
 ```
 
-##### Example 2
+##### Example 3
 Only collect data for a single DataItem with the type of "EXECUTION".
 
 ```xml
@@ -339,7 +339,7 @@ Only collect data for a single DataItem with the type of "EXECUTION".
 </DataGroup>
 ```
 
-##### Example 3
+##### Example 4
 Only collect axis data.
 
 ```xml
@@ -350,7 +350,7 @@ Only collect axis data.
 </DataGroup>
 ```
 
-##### Example 4
+##### Example 5
 Only collect data when the DataItem of type EMEGENCY_STOP is changed. 
 
 ```xml
