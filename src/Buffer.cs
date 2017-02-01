@@ -98,6 +98,14 @@ namespace TrakHound.DataClient
         public void Stop()
         {
             if (stop != null) stop.Set();
+
+            try
+            {
+                thread.Abort();
+            }
+            catch { }
+
+            log.Info("Buffer Stopped");
         }
 
 
@@ -370,7 +378,11 @@ namespace TrakHound.DataClient
         private string GetDirectory()
         {
             string dir = AppDomain.CurrentDomain.BaseDirectory;
-            if (!string.IsNullOrEmpty(Directory)) dir = Directory;
+            if (!string.IsNullOrEmpty(Directory))
+            {
+                if (Path.IsPathRooted(Directory)) dir = Directory;
+                else dir = Path.Combine(dir, Directory);
+            }
 
             if (!string.IsNullOrEmpty(Hostname)) dir = Path.Combine(dir, ConvertToFileName(Hostname));
 
