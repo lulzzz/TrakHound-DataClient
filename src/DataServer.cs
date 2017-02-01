@@ -142,6 +142,10 @@ namespace TrakHound.DataClient
             if (sendStop != null) sendStop.Set();
 
             if (streamClient != null) streamClient.Close();
+
+            if (Buffer != null) Buffer.Stop();
+
+            log.Info("DataServer : " + Hostname + " Stopped");
         }
 
         /// <summary>
