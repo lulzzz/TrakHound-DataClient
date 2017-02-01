@@ -125,6 +125,8 @@ namespace TrakHound.DataClient
 
         public void Stop()
         {
+            log.Info("TrakHound DataClient Stopping..");
+
             // Stop Devices
             foreach (var device in _configuration.Devices) device.Stop();
 
