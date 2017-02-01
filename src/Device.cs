@@ -159,6 +159,10 @@ namespace TrakHound.DataClient
             _agentClient = new MTConnectClient(AgentUrl, DeviceName);
             _agentClient.Interval = Interval;
 
+            // Subscribe to the Event handlers to receive status events
+            _agentClient.Started += _agentClient_Started;
+            _agentClient.Stopped += _agentClient_Stopped;
+
             // Subscribe to the Event handlers to receive the MTConnect documents
             _agentClient.ProbeReceived += DevicesSuccessful;
             _agentClient.CurrentReceived += StreamsSuccessful;
@@ -166,6 +170,16 @@ namespace TrakHound.DataClient
 
             // Start the MTConnectClient
             _agentClient.Start();
+        }
+
+        private void _agentClient_Started()
+        {
+            log.Info("MTConnect Client Started : " + AgentUrl + "/" + DeviceName);
+        }
+
+        private void _agentClient_Stopped()
+        {
+            log.Info("MTConnect Client Stopped : " + AgentUrl + "/" + DeviceName);
         }
 
         private void DevicesSuccessful(MTConnectDevices.Document document)
