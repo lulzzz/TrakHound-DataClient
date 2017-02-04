@@ -62,7 +62,7 @@ namespace TrakHound.DataClient.DataGroups
             var dataDefinition = DataClient.DataItemDefinitions.ToList().Find(o => o.DeviceId == deviceId && o.Id == sample.Id);
             if (dataDefinition != null)
             {
-                bool match = false;
+                bool match = Allowed == null || Allowed.Count == 0;
 
                 // Search Allowed Filters
                 foreach (var filter in Allowed)
