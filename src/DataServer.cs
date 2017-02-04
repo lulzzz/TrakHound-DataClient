@@ -186,7 +186,7 @@ namespace TrakHound.DataClient
                 foreach (var sample in FilterSamples(samples, CaptureMode.CURRENT))
                 {
                     if (!sampleSendList.Exists(o => o.Id == sample.Id)) sampleSendList.Add(sample);
-                    log.Trace("ARCHIVE : " + sample.Id + " : " + sample.Timestamp + " : " + sample.CDATA + " : " + sample.Condition);
+                    log.Trace("CURRENT : " + sample.Id + " : " + sample.Timestamp + " : " + sample.CDATA + " : " + sample.Condition);
                 }
 
                 added.AddRange(sampleSendList);

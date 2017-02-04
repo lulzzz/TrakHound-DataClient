@@ -9,7 +9,6 @@ using System.Configuration.Install;
 using System.IO;
 using System.Reflection;
 using System.ServiceProcess;
-using System.Threading;
 
 namespace TrakHound.DataClient
 {
