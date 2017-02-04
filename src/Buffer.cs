@@ -34,7 +34,7 @@ namespace TrakHound.DataClient
         /// <summary>
         /// Gets the directory that the buffer writes to. Read Only.
         /// </summary>
-        [XmlText]
+        [XmlAttribute("path")]
         public string Directory
         {
             get { return _directory; }
