@@ -61,7 +61,7 @@ Configuration is read from the **client.conf** XML file in the following format:
     <DataServer hostname="192.168.1.15" port="8472" useSSL="true">
       
       <!--Data Buffer Directory to buffer failed transfers until sent successfully-->
-      <Buffer>Buffers</Buffer>
+      <Buffer path="Buffers"/>
       
       <!--Define the data to send to DataServer-->
       <DataGroups>
