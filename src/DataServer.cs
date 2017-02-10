@@ -164,6 +164,7 @@ namespace TrakHound.DataClient
             var added = new List<IStreamData>();
 
             // Add any Definitions
+            added.AddRange(data.OfType<ConnectionDefinitionData>().ToList());
             added.AddRange(data.OfType<AgentDefinitionData>().ToList());
             added.AddRange(data.OfType<ComponentDefinitionData>().ToList());
             added.AddRange(data.OfType<DataItemDefinitionData>().ToList());
@@ -287,6 +288,7 @@ namespace TrakHound.DataClient
 
                     var sendList = new List<IStreamData>();
 
+                    sendList.AddRange(Buffer.Read<ConnectionDefinitionData>(maxRecords - sendList.Count).ToList<IStreamData>());
                     sendList.AddRange(Buffer.Read<AgentDefinitionData>(maxRecords - sendList.Count).ToList<IStreamData>());
                     sendList.AddRange(Buffer.Read<ComponentDefinitionData>(maxRecords - sendList.Count).ToList<IStreamData>());
                     sendList.AddRange(Buffer.Read<DataItemDefinitionData>(maxRecords - sendList.Count).ToList<IStreamData>());

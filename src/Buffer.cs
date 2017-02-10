@@ -22,6 +22,7 @@ namespace TrakHound.DataClient
     /// </summary>
     public class Buffer
     {
+        public const string FILENAME_CONNECTION_DEFINITIONS = "connection_definitions";
         public const string FILENAME_AGENT_DEFINITIONS = "agent_definitions";
         public const string FILENAME_COMPONENT_DEFINITIONS = "component_definitions";
         public const string FILENAME_DATA_ITEM_DEFINITIONS = "data_item_definitions";
@@ -149,7 +150,8 @@ namespace TrakHound.DataClient
                 {
                     string f = null;
 
-                    if (typeof(T) == typeof(AgentDefinitionData)) f = FILENAME_AGENT_DEFINITIONS;
+                    if (typeof(T) == typeof(ConnectionDefinitionData)) f = FILENAME_CONNECTION_DEFINITIONS;
+                    else if (typeof(T) == typeof(AgentDefinitionData)) f = FILENAME_AGENT_DEFINITIONS;
                     else if (typeof(T) == typeof(ComponentDefinitionData)) f = FILENAME_COMPONENT_DEFINITIONS;
                     else if (typeof(T) == typeof(DataItemDefinitionData)) f = FILENAME_DATA_ITEM_DEFINITIONS;
                     else if (typeof(T) == typeof(DeviceDefinitionData)) f = FILENAME_DEVICE_DEFINITIONS;
@@ -215,6 +217,9 @@ namespace TrakHound.DataClient
             lock (_lock) temp = queue.ToList();
             if (!temp.IsNullOrEmpty())
             {
+                // Write Connection Definitions
+                ids.AddRange(WriteToFile(temp.OfType<ConnectionDefinitionData>().ToList<IStreamData>(), StreamDataType.CONNECTION_DEFINITION));
+
                 // Write Agent Definitions
                 ids.AddRange(WriteToFile(temp.OfType<AgentDefinitionData>().ToList<IStreamData>(), StreamDataType.AGENT_DEFINITION));
 
@@ -335,6 +340,7 @@ namespace TrakHound.DataClient
 
                             IStreamData item = null;
 
+                            if (filename.StartsWith(FILENAME_CONNECTION_DEFINITIONS)) item = Csv.FromCsv<ConnectionDefinitionData>(line);
                             if (filename.StartsWith(FILENAME_AGENT_DEFINITIONS)) item = Csv.FromCsv<AgentDefinitionData>(line);
                             if (filename.StartsWith(FILENAME_DEVICE_DEFINITIONS)) item = Csv.FromCsv<DeviceDefinitionData>(line);
                             if (filename.StartsWith(FILENAME_COMPONENT_DEFINITIONS)) item = Csv.FromCsv<ComponentDefinitionData>(line);
@@ -395,6 +401,7 @@ namespace TrakHound.DataClient
 
             switch (type)
             {
+                case StreamDataType.CONNECTION_DEFINITION: file = FILENAME_CONNECTION_DEFINITIONS; break;
                 case StreamDataType.AGENT_DEFINITION: file = FILENAME_AGENT_DEFINITIONS; break;
                 case StreamDataType.COMPONENT_DEFINITION: file = FILENAME_COMPONENT_DEFINITIONS; break;
                 case StreamDataType.DATA_ITEM_DEFINITION: file = FILENAME_DATA_ITEM_DEFINITIONS; break;

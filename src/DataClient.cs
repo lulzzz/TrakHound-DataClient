@@ -27,6 +27,12 @@ namespace TrakHound.DataClient
         private object _lock = new object();
 
 
+        private static List<ConnectionDefinitionData> _connectionDefinitions = new List<ConnectionDefinitionData>();
+        /// <summary>
+        /// Gets a list of current ConnectionDefinitions that have been read. Read Only.
+        /// </summary>
+        public static ReadOnlyCollection<ConnectionDefinitionData> ConnectionDefinitions { get { return _connectionDefinitions.AsReadOnly(); } }
+
         private static List<AgentDefinitionData> _agentDefinitions = new List<AgentDefinitionData>();
         /// <summary>
         /// Gets a list of current AgentDefinitions that have been read. Read Only.
@@ -88,12 +94,6 @@ namespace TrakHound.DataClient
 
         public void Start()
         {
-            // Start Devices
-            foreach (var device in _configuration.Devices)
-            {
-                StartDevice(device);
-            }
-
             log.Info("---------------------------");
 
             // Start Data Servers
@@ -101,6 +101,12 @@ namespace TrakHound.DataClient
             {
                 dataServer.Start();
                 log.Info("DataServer Started : " + dataServer.Name + " @ " + dataServer.Hostname);
+            }
+
+            // Start Devices
+            foreach (var device in _configuration.Devices)
+            {
+                StartDevice(device);
             }
 
             log.Info("---------------------------");
@@ -157,15 +163,17 @@ namespace TrakHound.DataClient
             // Check to make sure the Device is not already added
             if (!Configuration.Devices.Exists(o => o.DeviceId == deviceId))
             {
-                // Create the MTConnect Agent Base URL
-                string url = string.Format("http://{0}:{1}", device.IpAddress, device.Port);
+                var conn = new Api.v2.Data.Connection();
+                conn.Address = device.IpAddress.ToString();
+                conn.PhysicalAddress = device.MacAddress.ToString();
+                conn.Port = device.Port;
 
                 // Create a new Device and start it
-                var d = new Device(deviceId, url, device.DeviceName);
+                var d = new Device(deviceId, conn, device.DeviceName);
                 Configuration.Devices.Add(d);
                 StartDevice(d);
 
-                log.Info("New Device Added : " + deviceId + " : " + device.DeviceName + " : " + url);
+                log.Info("New Device Added : " + deviceId + " : " + device.DeviceName + " : " + device.IpAddress + " : " + device.Port);
             }
         }
 
@@ -178,7 +186,13 @@ namespace TrakHound.DataClient
             device.SamplesReceived += SamplesReceived;
             device.Start();
 
-            log.Info("Device Started : " + device.DeviceId + " : " + device.DeviceName + " : " + device.AgentUrl);
+            // Send Connection to DataServers
+            foreach (var dataServer in Configuration.DataServers)
+            {
+                dataServer.Add(device.AgentConnection);
+            }
+
+            log.Info("Device Started : " + device.DeviceId + " : " + device.DeviceName + " : " + device.Address + " : " + device.Port);
         }
 
         private void AgentDefinitionReceived(AgentDefinitionData definition)
