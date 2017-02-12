@@ -312,7 +312,7 @@ namespace TrakHound.DataClient
 
                 foreach (var dataItem in deviceStream.DataItems)
                 {
-                    samples.Add(Create(DeviceId, dataItem));
+                    samples.Add(Create(DeviceId, document.Header.InstanceId, dataItem));
                 }
 
                 if (samples.Count > 0) SamplesReceived?.Invoke(samples);
@@ -404,13 +404,14 @@ namespace TrakHound.DataClient
             return obj;
         }
 
-        private static SampleData Create(string deviceId, MTConnectStreams.DataItem dataItem)
+        private static SampleData Create(string deviceId, long agentInstanceId, MTConnectStreams.DataItem dataItem)
         {
             var obj = new SampleData();
 
             obj.DeviceId = deviceId;
 
             obj.Id = dataItem.DataItemId;
+            obj.AgentInstanceId = agentInstanceId;
             obj.Sequence = dataItem.Sequence;
             obj.Timestamp = dataItem.Timestamp;
             obj.CDATA = dataItem.CDATA;
