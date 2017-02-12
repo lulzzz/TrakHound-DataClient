@@ -420,5 +420,7 @@ Starting the DataClient with the 'uninstall' command line argument uninstalls th
 *Dependency Name (License)*
 - [RestSharp](https://github.com/restsharp/RestSharp) (Apache 2.0)
 - [Json.NET](https://github.com/JamesNK/Newtonsoft.Json) (MIT)
+- [NLog](https://github.com/NLog/NLog) (BSD 3-Clause)
 - [MTConnect.NET](https://github.com/TrakHound/MTConnect.NET) (Apache 2.0)
 - [TrakHound-Api](https://github.com/TrakHound/TrakHound-Api) (Apache 2.0)
+
