@@ -61,13 +61,29 @@ Configuration is read from the **client.conf** XML file in the following format:
     <DataServer hostname="192.168.1.15" port="8472" useSSL="true">
       
       <!--Data Buffer Directory to buffer failed transfers until sent successfully-->
-      <Buffer>Buffers</Buffer>
+      <Buffer path="Buffers"/>
       
       <!--Define the data to send to DataServer-->
       <DataGroups>
 
-        <!--All Data Items-->
-        <DataGroup name="all" captureMode="ARCHIVE">
+        <!--Ignore constantly changing samples-->
+        <DataGroup name="monitor" captureMode="ARCHIVE">
+          <Deny>
+            <Filter>BLOCK</Filter>
+            <Filter>LINE</Filter>
+            <Filter>BLOCK</Filter>
+            <Filter>POSITION</Filter>
+            <Filter>PATH_FEEDRATE</Filter>
+            <Filter>PATH_POSITION</Filter>
+            <Filter>ROTARY_VELOCITY</Filter>
+          </Deny>
+          <Include>
+            <DataGroup>snapshot</DataGroup>
+          </Include>
+        </DataGroup>
+
+        <!--Take a snapshot of All dataitems-->
+        <DataGroup name="snapshot" captureMode="INCLUDE">
           <Allow>
             <Filter>*</Filter>
           </Allow>
@@ -193,8 +209,24 @@ Represents each TrakHound Data Server that data is sent to in order to be strore
       <!--Define the data to send to DataServer-->
       <DataGroups>
 
-        <!--Collect ALL Data-->
-        <DataGroup name="all" captureMode="ARCHIVE">
+        <!--Ignore constantly changing samples-->
+        <DataGroup name="monitor" captureMode="ARCHIVE">
+          <Deny>
+            <Filter>BLOCK</Filter>
+            <Filter>LINE</Filter>
+            <Filter>BLOCK</Filter>
+            <Filter>POSITION</Filter>
+            <Filter>PATH_FEEDRATE</Filter>
+            <Filter>PATH_POSITION</Filter>
+            <Filter>ROTARY_VELOCITY</Filter>
+          </Deny>
+          <Include>
+            <DataGroup>snapshot</DataGroup>
+          </Include>
+        </DataGroup>
+
+        <!--Take a snapshot of All dataitems-->
+        <DataGroup name="snapshot" captureMode="INCLUDE">
           <Allow>
             <Filter>*</Filter>
           </Allow>
@@ -285,35 +317,35 @@ Filters specify the path to either allow or deny. Below are examples of accecpta
 Watch for when new "Status" data items are received within a Controller component that isn't listed under the Deny list. DataItems are denied that change constantly such as the current program line/block, feedrate, etc. When a new item is found, include the DataGroup "all". This essentially takes a snapshot of the entire device whenever one of the "Status" items is changed. 
 
 ```xml
-<!--All Data Items-->
-<DataGroup name="all" captureMode="INCLUDE">
-    <Allow>
-    <Filter>*</Filter>
-    </Allow>
+<!--Ignore constantly changing samples-->
+<DataGroup name="monitor" captureMode="ARCHIVE">
+
+  <!--List the Denied Filters (Denied Filters override Allowed)-->
+  <Deny>
+	<Filter>BLOCK</Filter>
+	<Filter>LINE</Filter>
+	<Filter>BLOCK</Filter>
+	<Filter>POSITION</Filter>
+	<Filter>PATH_FEEDRATE</Filter>
+	<Filter>PATH_POSITION</Filter>
+	<Filter>ROTARY_VELOCITY</Filter>
+  </Deny>
+  
+  <!--List the additional groups to include when current group is captured-->
+  <Include>
+	<DataGroup>snapshot</DataGroup>
+  </Include>
+  
 </DataGroup>
 
-<!--Device Status Data Group. Always send new data.-->
-<DataGroup name="status" captureMode="ARCHIVE">
-    
-    <!--List the allowed Filters-->
-    <Allow>
-        <Filter>Controller/*</Filter>       
-    </Allow>
-    
-    <!--List the Denied Filters (Denied Filters override Allowed)-->
-    <Deny>
-        <Filter>Frt</Filter>
-        <Filter>PathFeedrate</Filter>
-        <Filter>PathPosition</Filter>
-        <Filter>Line</Filter>
-        <Filter>Block</Filter>
-    </Deny>
+<!--Take a snapshot of All dataitems-->
+<DataGroup name="snapshot" captureMode="INCLUDE">
 
-    <!--List the additional groups to include when current group is captured-->
-    <Include>
-        <DataGroup>all</DataGroup>
-    </Include>
-    
+  <!--List the allowed Filters-->
+  <Allow>
+	<Filter>*</Filter>
+  </Allow>
+  
 </DataGroup>
 ```
 
