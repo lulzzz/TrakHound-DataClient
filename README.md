@@ -417,6 +417,8 @@ Starting the DataClient with the 'install' command line argument installs the Da
 Starting the DataClient with the 'uninstall' command line argument uninstalls the DataClient's Windows Service.
 
 # Dependencies
-** Dependency Name (License)
+*Dependency Name (License)*
 - [RestSharp](https://github.com/restsharp/RestSharp) (Apache 2.0)
 - [Json.NET](https://github.com/JamesNK/Newtonsoft.Json) (MIT)
+- [MTConnect.NET](https://github.com/TrakHound/MTConnect.NET) (Apache 2.0)
+- [TrakHound-Api](https://github.com/TrakHound/TrakHound-Api) (Apache 2.0)
