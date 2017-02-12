@@ -401,3 +401,18 @@ Only collect data when the DataItem of type EMEGENCY_STOP is changed.
     </Include>
 </DataGroup>
 ```
+
+# Command Line Arguments
+
+## Debug
+### *(Argument = debug)*
+Starting the DataClient with the 'debug' command line argument runs the DataClient as a **Console Application** instead of a Windows Service. This mode can be used for quickly debugging issues or for testing and development.
+
+## Install
+### *(Argument = install)*
+Starting the DataClient with the 'install' command line argument installs the DataClient as a Windows Service.
+
+## Uninstall
+### *(Argument = uninstall)*
+Starting the DataClient with the 'uninstall' command line argument uninstalls the DataClient's Windows Service.
+
