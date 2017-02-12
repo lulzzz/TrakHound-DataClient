@@ -120,6 +120,13 @@ Data is sent to the DataServer(s) in the form of JSON using the below format:
 }
 ```
 
+# DataServer Response
+Each item of data sent to the DataServer should be separated by a new line ('\r\n') and each item is validated by the DataServer for correct format. The DataServer will respond with a **200**, **400**, or **401** code representing Success, Bad Request Format, and Authentication Failed. This sequence happens for each item in order to insure data integrity.
+
+*Note : Code 401 (Authentication Failed) only occurs when using the TrakHound Cloud DataServer which requires an ApiKey for authentication.*
+
+# Buffer
+A Buffer is used to store data that was unsuccessfully sent to the DataServer in the case of a temporary loss of connection. The buffer is composed of multiple csv files. By storing the buffer on the filesystem (as opposed to in memory), this makes the buffer 'non-volatile' and is automatically recovered on power loss. This system insures that data is never lost and allows for easy DataServer maintenance.
 
 # Configuration
 Configuration is read from the **client.conf** XML file in the following format:
