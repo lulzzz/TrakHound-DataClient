@@ -35,6 +35,92 @@ Each TrakHound DataClient can also filter data to only send specific data to cer
 Of course, the biggest security benefit to using TrakHound is that it is Open Source and the source code can be reviewed to insure exactly what data is being collected and to make sure that no other data is being sent anywhere it shouldn't be.
 
 
+# Data Format
+Data is sent to the DataServer(s) in the form of JSON using the below format:
+
+#### Connection Definition
+``` json
+{
+	"stream_data_type": 1,
+	"device_id": "16223e3b-670b-425a-ba2f-8f8bfaa7cbe5",
+	"address": "192.168.1.15",
+	"port": 5001,
+	"physical_address": "01-23-45-67-89-ab"
+}
+```
+
+#### Agent Definition
+``` json
+{
+	"stream_data_type": 2,
+	"device_id": "16223e3b-670b-425a-ba2f-8f8bfaa7cbe5",
+	"timestamp": 1486941244000,
+	"instance_id": 1485218744,
+	"sender": "mtcagent",
+	"version": "1.3.0.9",
+	"buffer_size": 131072
+}
+```
+
+#### Device Definition
+``` json
+{
+	"stream_data_type": 3,
+	"device_id": "16223e3b-670b-425a-ba2f-8f8bfaa7cbe5",
+	"agent_instance_id": 1485218744,
+	"id": "dev",
+	"uuid": "000",
+	"name": "VMC-3Axis",
+	"sample_interval": 10.0,
+	"sample_rate": 0.0,
+	"iso_841_class": "6"
+}
+```
+
+#### Component Definition
+``` json
+{
+	"stream_data_type": 4,
+	"device_id": "16223e3b-670b-425a-ba2f-8f8bfaa7cbe5",
+	"agent_instance_id": 1485218744,
+	"parent_id": "dev",
+	"type": "Axes",
+	"id": "ax",
+	"name": "Axes",
+	"sample_interval": 0.0,
+	"sample_rate": 0.0
+}
+```
+
+#### DataItem Definition
+``` json
+{
+	"stream_data_type": 5,
+	"device_id": "16223e3b-670b-425a-ba2f-8f8bfaa7cbe5",
+	"agent_instance_id": 1485218744,
+	"parent_id": "cn1",
+	"id": "estop",
+	"category": "EVENT",
+	"type": "EMERGENCY_STOP",
+	"sample_rate": 0.0,
+	"significant_digits": 0
+}
+```
+
+#### Sample Definition
+``` json
+{
+	"stream_data_type": 7,
+	"device_id": "16223e3b-670b-425a-ba2f-8f8bfaa7cbe5",
+	"timestamp": 1486941044659,
+	"agent_instance_id": 1485218744,
+	"id": "estop",
+	"sequence": 389526903,
+	"cdata": "ARMED"
+}
+```
+
+
 # Configuration
 Configuration is read from the **client.conf** XML file in the following format:
 
