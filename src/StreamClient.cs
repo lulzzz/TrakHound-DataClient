@@ -21,7 +21,7 @@ namespace TrakHound.DataClient
     /// </summary>
     public class StreamClient
     {
-        private static Logger logger = LogManager.GetCurrentClassLogger();
+        private static Logger log = LogManager.GetCurrentClassLogger();
 
         private object _lock = new object();
         private Thread thread;
@@ -205,7 +205,7 @@ namespace TrakHound.DataClient
                     streamWriter = new StreamWriter(stream);
                     streamReader = new StreamReader(stream);
 
-                    logger.Info("Connection Established with " + ServerHostname + ":" + _port);
+                    log.Info("Connection Established with " + ServerHostname + ":" + _port);
                     Connected?.Invoke(this, new EventArgs());
                     connected = true;
                 }
@@ -215,8 +215,8 @@ namespace TrakHound.DataClient
             catch (Exception ex)
             {
                 if (client != null) client.Close();
-                logger.Warn("Error Connecting to " + ServerHostname + ":" + _port + ". Retrying in " + ReconnectionDelay + "ms..");
-                logger.Trace(ex);
+                log.Warn("Error Connecting to " + ServerHostname + ":" + _port + ". Retrying in " + ReconnectionDelay + "ms..");
+                log.Trace(ex);
             }
 
             if (connected) Disconnected?.Invoke(this, new EventArgs());
@@ -244,7 +244,7 @@ namespace TrakHound.DataClient
                             int responseCode;
                             if (int.TryParse(response, out responseCode))
                             {
-                                logger.Trace(response);
+                                log.Trace(response);
                                 return responseCode;
                             }
                         }
@@ -252,8 +252,8 @@ namespace TrakHound.DataClient
                 }
                 catch (Exception ex)
                 {
-                    logger.Warn("Error While Sending Data. Send Failed.");
-                    logger.Trace(ex);
+                    log.Warn("Error While Sending Data. Send Failed.");
+                    log.Trace(ex);
                 }
             }
 
@@ -273,14 +273,14 @@ namespace TrakHound.DataClient
 
         private void PrintCertificateInfo(X509Certificate cert, string title = null)
         {
-            logger.Trace("SSL Certificate Information (" + title + ")");
-            logger.Trace("---------------------------");
-            logger.Trace("Subject : " + cert.Subject);
-            logger.Trace("Serial Number : " + cert.GetSerialNumber());
-            logger.Trace("Format : " + cert.GetFormat());
-            logger.Trace("Effective Date : " + cert.GetEffectiveDateString());
-            logger.Trace("Expiration Date : " + cert.GetExpirationDateString());
-            logger.Trace("---------------------------");
+            log.Trace("SSL Certificate Information (" + title + ")");
+            log.Trace("---------------------------");
+            log.Trace("Subject : " + cert.Subject);
+            log.Trace("Serial Number : " + cert.GetSerialNumber());
+            log.Trace("Format : " + cert.GetFormat());
+            log.Trace("Effective Date : " + cert.GetEffectiveDateString());
+            log.Trace("Expiration Date : " + cert.GetExpirationDateString());
+            log.Trace("---------------------------");
         }
 
         private static bool ValidateServerCertificate(
@@ -292,7 +292,7 @@ namespace TrakHound.DataClient
             if (sslPolicyErrors == SslPolicyErrors.None)
                 return true;
 
-            logger.Error("Certificate error: {0}", sslPolicyErrors);
+            log.Error("Certificate error: {0}", sslPolicyErrors);
 
             // Do not allow this client to communicate with unauthenticated servers.
             return false;
