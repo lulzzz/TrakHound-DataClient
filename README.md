@@ -18,7 +18,7 @@ The TrakHound DataClient and DataServer applications provide the manufacturing c
 - Supports SSL(TLS) for sending data to TrakHound DataServers
 - Non-volatile buffering to retain collected data between connection interruptions
 
-
+<br>
 ### Data Storage
 **MTConnect Agents by themselves are not storage applications.** This is made clear in the MTConnect Standard. Instead the purpose of MTConnect Agents is to serve data to client applications when requested. While the Agent does keep a small buffer, this buffer is not intended to be used for data storage but rather to retain data between connection interruptions. TrakHound fulfills the role of requesting this data and then storing it in a database for permanant storage. Data is stored which can then be accessed by other TrakHound applications, ERP/MES systems, third party software, or by reading the database directly using software such as Microsoft Access.
 
@@ -34,7 +34,7 @@ Each TrakHound DataClient can also filter data to only send specific data to cer
 
 Of course, the biggest security benefit to using TrakHound is that it is Open Source and the source code can be reviewed to insure exactly what data is being collected and to make sure that no other data is being sent anywhere it shouldn't be.
 
-
+<br>
 # Data Format
 Data is sent to the DataServer(s) in the form of JSON using the below format:
 
@@ -120,17 +120,21 @@ Data is sent to the DataServer(s) in the form of JSON using the below format:
 }
 ```
 
-
+<br>
 # DataServer Response
 Each item of data sent to the DataServer should be separated by a new line ('\r\n') and each item is validated by the DataServer for correct format. The DataServer will respond with a **200**, **400**, or **401** code representing Success, Bad Request Format, and Authentication Failed. This sequence happens for each item in order to insure data integrity.
 
 *Note : Code 401 (Authentication Failed) only occurs when using the TrakHound Cloud DataServer which requires an ApiKey for authentication.*
 
-
+<br>
 # Buffer
 A Buffer is used to store data that was unsuccessfully sent to the DataServer in the case of a temporary loss of connection. The buffer is composed of multiple csv files. By storing the buffer on the filesystem (as opposed to in memory), this makes the buffer 'non-volatile' and is automatically recovered on power loss. This system insures that data is never lost and allows for easy DataServer maintenance.
 
+<br>
+# MTConnect
+The DataClient application uses MTConnect in order to retrieve data from devices. Operations are performed using the MTConnect.NET library which utilizes a streaming connection.
 
+<br>
 # Configuration
 Configuration is read from the **client.conf** XML file in the following format:
 
