@@ -25,7 +25,14 @@ namespace TrakHound.DataClient
         /// </summary>
         private const int MAX_SEND_COUNT = 2000;
 
+        /// <summary>
+        /// The interval (in milliseconds) that the Buffer is read
+        /// </summary>
         private const int BUFFER_READ_INTERVAL = 5000;
+
+        /// <summary>
+        /// The maximum number of items to read from the Buffer at one time
+        /// </summary>
         private const int MAX_BUFFER_READ_COUNT = 5000;
 
         private static Logger log = LogManager.GetCurrentClassLogger();
