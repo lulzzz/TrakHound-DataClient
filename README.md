@@ -1,5 +1,6 @@
 ![TrakHound DataClient](dataclient-logo-02-75px.png)
 <br>
+[![Travis branch](https://img.shields.io/travis/TrakHound/TrakHound-DataClient.svg?style=flat-square)](https://travis-ci.org/TrakHound/TrakHound-DataClient)
 <br>
 TrakHound DataClient reads MTConnect® streams and sends the data to TrakHound DataServers to be stored. 
 
