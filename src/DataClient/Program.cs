@@ -8,7 +8,10 @@ using System;
 using System.Configuration.Install;
 using System.IO;
 using System.Reflection;
+using System.ServiceModel;
 using System.ServiceProcess;
+using WCF = TrakHound.Api.v2.WCF;
+using TrakHound.DataClient.Messages;
 
 namespace TrakHound.DataClient
 {
@@ -16,7 +19,8 @@ namespace TrakHound.DataClient
     {
         private static Logger log = LogManager.GetCurrentClassLogger();
         private static DataClient client;
-        
+        internal static ServiceHost MessageServer;
+
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
@@ -63,6 +67,12 @@ namespace TrakHound.DataClient
 
         public static void Start()
         {
+            // Start MessageServer
+            if (MessageServer == null)
+            {
+                MessageServer = WCF.Server.Create<MessageServer>("trakhound-dataclient");
+            }
+
             // Get the default Configuration file path
             string configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Configuration.FILENAME);
 

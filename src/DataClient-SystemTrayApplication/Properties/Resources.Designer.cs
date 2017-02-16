@@ -63,9 +63,9 @@ namespace TrakHound.DataClient.SystemTray.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
         /// </summary>
-        internal static System.Drawing.Icon AppIcon {
+        internal static System.Drawing.Icon dataclient {
             get {
-                object obj = ResourceManager.GetObject("AppIcon", resourceCulture);
+                object obj = ResourceManager.GetObject("dataclient", resourceCulture);
                 return ((System.Drawing.Icon)(obj));
             }
         }

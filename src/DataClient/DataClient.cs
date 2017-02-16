@@ -14,6 +14,8 @@ using System.Text;
 using System.Text.RegularExpressions;
 using TrakHound.Api.v2.Streams;
 using TrakHound.Api.v2.Streams.Data;
+using TrakHound.DataClient.Messages;
+using WCF = TrakHound.Api.v2.WCF;
 
 namespace TrakHound.DataClient
 {
@@ -127,6 +129,8 @@ namespace TrakHound.DataClient
 
                 log.Info("---------------------------");
             }
+
+            WCF.MessageClient.Send("trakhound-dataclient-systemtray", new WCF.Message("Started"));
         }
 
         public void Stop()
@@ -142,6 +146,8 @@ namespace TrakHound.DataClient
             // Stop the Device Finder
             var deviceFinder = _configuration.DeviceFinder;
             if (deviceFinder != null) deviceFinder.Stop();
+
+            WCF.MessageClient.Send("trakhound-dataclient-systemtray", new WCF.Message("Stopped"));
         }
 
 
@@ -152,6 +158,9 @@ namespace TrakHound.DataClient
 
         private void DeviceFinder_DeviceFound(MTConnectSniffer.MTConnectDevice device)
         {
+            var message = new WCF.Message(string.Format("Device Found ({0} @ {1}:{2})", device.DeviceName, device.IpAddress, device.Port));
+            WCF.MessageClient.Send("trakhound-dataclient-systemtray", message);
+
             AddDevice(device);
         }
 
