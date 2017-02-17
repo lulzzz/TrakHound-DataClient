@@ -38,6 +38,9 @@
   <PropertyGroup>
     <StartupObject />
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>dataclient.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="MTConnect-NET, Version=2.4.0.35373, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>packages\MTConnect.NET.2.4.0.35373\lib\net40\MTConnect-NET.dll</HintPath>
@@ -68,6 +71,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="System.Numerics" />
+    <Reference Include="System.ServiceModel" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -76,8 +80,8 @@
     <Reference Include="System.ServiceProcess" />
     <Reference Include="System.Xml" />
     <Reference Include="TrakHound-Api, Version=1.2.0.32390, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\TrakHound-Api.1.2.0.32390\lib\net40\TrakHound-Api.dll</HintPath>
-      <Private>True</Private>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\TrakHound-Api\src\bin\Release\TrakHound-Api.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -105,6 +109,7 @@
     <Compile Include="DataClientService.Designer.cs">
       <DependentUpon>DataClientService.cs</DependentUpon>
     </Compile>
+    <Compile Include="Messages\MessageServer.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="StreamClient.cs" />
@@ -129,6 +134,10 @@
     <EmbeddedResource Include="DataClientService.resx">
       <DependentUpon>DataClientService.cs</DependentUpon>
     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="dataclient.ico" />
+    <Content Include="trakhound.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
