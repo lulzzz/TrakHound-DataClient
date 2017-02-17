@@ -5,10 +5,8 @@
 
 using System;
 using System.Windows.Forms;
-using System.ServiceModel;
-using System.Windows.Forms;
-using WCF = TrakHound.Api.v2.WCF;
 using TrakHound.DataClient.SystemTray.Messages;
+using WCF = TrakHound.Api.v2.WCF;
 
 namespace TrakHound.DataClient.SystemTray
 {
@@ -20,8 +18,6 @@ namespace TrakHound.DataClient.SystemTray
         [STAThread]
         static void Main()
         {
-            Console.WriteLine("TrakHound DataClient SystemTray Started()");
-
             // Start MessageServer
             var MessageServer = WCF.Server.Create<MessageServer>("trakhound-dataclient-systemtray");
 

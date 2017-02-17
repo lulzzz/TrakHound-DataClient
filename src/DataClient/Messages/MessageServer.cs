@@ -31,15 +31,25 @@ namespace TrakHound.DataClient.Messages
 
         public object SendData(Message data)
         {
-            if (data != null && data.Text != null)
+            if (data != null && data.Id != null)
             {
                 log.Info("Message Received : " + data.Text);
 
-                switch (data.Text.ToLower())
+                switch (data.Id.ToLower())
                 {
-                    case "start": Program.Start(); break;
+                    case "command":
 
-                    case "stop": Program.Stop(); break;
+                        if (!string.IsNullOrEmpty(data.Text))
+                        {
+                            switch (data.Text.ToLower())
+                            {
+                                case "start": Program.Start(); break;
+
+                                case "stop": Program.Stop(); break;
+                            }
+                        }
+
+                        break;
                 }
             }
 

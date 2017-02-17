@@ -31,14 +31,21 @@ namespace TrakHound.DataClient.SystemTray.Messages
 
         public object SendData(Message data)
         {
-            if (data != null && data.Text != null)
+            if (data != null && data.Id != null)
             {
-                var notifyIcon = DataClientSystemTray.NotifyIcon;
+                switch (data.Id.ToLower())
+                {
+                    case "notify":
 
-                notifyIcon.BalloonTipTitle = "TrakHound DataClient";
-                notifyIcon.BalloonTipText = data.Text;
-                notifyIcon.Icon = Properties.Resources.dataclient;
-                notifyIcon.ShowBalloonTip(5000);
+                        var notifyIcon = DataClientSystemTray.NotifyIcon;
+                        notifyIcon.BalloonTipTitle = "TrakHound DataClient";
+                        notifyIcon.BalloonTipText = data.Text;
+                        notifyIcon.Icon = Properties.Resources.dataclient;
+                        notifyIcon.ShowBalloonTip(5000);
+                        break;
+
+                    case "status": DataClientSystemTray.SetHeader(data.Text); break;
+                }
             }
 
             return "Data Sent Successfully!";
@@ -55,6 +62,5 @@ namespace TrakHound.DataClient.SystemTray.Messages
                 log.Error(ex);
             }
         }
-
     }
 }

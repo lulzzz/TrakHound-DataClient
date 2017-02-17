@@ -109,7 +109,6 @@
     <Compile Include="DataClientService.Designer.cs">
       <DependentUpon>DataClientService.cs</DependentUpon>
     </Compile>
-    <None Include="Messages\MessageClient.cs" />
     <Compile Include="Messages\MessageServer.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
