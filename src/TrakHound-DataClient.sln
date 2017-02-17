@@ -5,7 +5,7 @@ VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrakHound-DataClient", "DataClient\TrakHound-DataClient.csproj", "{A08323E8-AEE6-4E77-A014-567DEF401D4B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataClient-SystemTray", "DataClient-SystemTrayApplication\DataClient-SystemTray.csproj", "{15C4E083-5741-477B-A153-D0C24F80C245}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrakHound-DataClient-SystemTray", "DataClient-SystemTray\TrakHound-DataClient-SystemTray.csproj", "{15C4E083-5741-477B-A153-D0C24F80C245}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
