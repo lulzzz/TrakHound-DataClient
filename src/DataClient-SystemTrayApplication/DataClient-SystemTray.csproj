@@ -6,7 +6,7 @@
     <ProductVersion>8.0.50727</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{15C4E083-5741-477B-A153-D0C24F80C245}</ProjectGuid>
-    <OutputType>Exe</OutputType>
+    <OutputType>WinExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>TrakHound.DataClient.SystemTray</RootNamespace>
     <AssemblyName>DataClient-SystemTray</AssemblyName>

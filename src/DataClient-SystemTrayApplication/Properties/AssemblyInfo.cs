@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("TaskTrayApplication")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("TrakHound DataClient SystemTray")]
+[assembly: AssemblyDescription("SystemTray Menu for TrakHound DataClient Application")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Home")]
-[assembly: AssemblyProduct("TaskTrayApplication")]
-[assembly: AssemblyCopyright("Copyright © Home 2007")]
+[assembly: AssemblyCompany("TrakHound Inc.")]
+[assembly: AssemblyProduct("TrakHound DataClient SystemTray")]
+[assembly: AssemblyCopyright("© 2017 TrakHound Inc., All Rights Reserved")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
