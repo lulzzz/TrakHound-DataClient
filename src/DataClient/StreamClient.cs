@@ -11,8 +11,8 @@ using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
-using TrakHound.Api.v2;
 using TrakHound.Api.v2.Streams;
+using Json = TrakHound.Api.v2.Json;
 
 namespace TrakHound.DataClient
 {
@@ -230,7 +230,7 @@ namespace TrakHound.DataClient
             {
                 try
                 {
-                    var json = Requests.ToJson(data);
+                    var json = Json.Convert.ToJson(data);
                     if (!string.IsNullOrEmpty(json))
                     {
                         // Write JSON to stream
