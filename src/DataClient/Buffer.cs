@@ -91,6 +91,8 @@ namespace TrakHound.DataClient
 
             thread = new Thread(new ThreadStart(WriteWorker));
             thread.Start();
+
+            log.Info("Buffer Started : " + GetDirectory());
         }
 
         /// <summary>
@@ -324,8 +326,6 @@ namespace TrakHound.DataClient
             {
                 try
                 {
-                    var tempFile = Path.GetTempFileName();
-
                     string filename = Path.GetFileNameWithoutExtension(path);
 
                     var d = new List<IStreamData>();
@@ -352,9 +352,17 @@ namespace TrakHound.DataClient
                                 d.Add(item);
                             }
                         }
+                    }
 
-                        // Write un removed records back to file
-                        using (var writer = new StreamWriter(tempFile))
+                    // Delete previously used file
+                    File.Delete(path);
+
+                    // Write unremoved records back to file
+                    if (d.Count > 0)
+                    {
+                        // Create temporary file to store unremoved records in
+                        var tempFile = Path.GetTempFileName();
+                        using (var writer = new StreamWriter(tempFile, true))
                         {
                             foreach (var data in d)
                             {
@@ -365,16 +373,23 @@ namespace TrakHound.DataClient
                                 }
                             }
                         }
-                    }
 
-                    File.Delete(path);
-                    if (d.Count > 0) File.Move(tempFile, path);
+                        File.Move(tempFile, path);
+                    }
 
                     return true;
                 }
+                catch (IOException ex)
+                {
+                    log.Warn(ex, path);
+                }
+                catch (UnauthorizedAccessException ex)
+                {
+                    log.Warn(ex, path);
+                }
                 catch (Exception ex)
                 {
-                    log.Trace(ex);
+                    log.Trace(ex, path);
                 }
             }
 
@@ -471,7 +486,7 @@ namespace TrakHound.DataClient
                 if (i < c - 1) rt = rt + "_";
             }
             return rt;
-        }      
+        }
 
     }
 }
