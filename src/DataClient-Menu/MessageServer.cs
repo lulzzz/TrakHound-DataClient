@@ -8,9 +8,9 @@ using System;
 using System.ServiceModel;
 using TrakHound.Api.v2.WCF;
 
-namespace TrakHound.DataClient.SystemTray.Messages
+namespace TrakHound.DataClient.Menu
 {
-    [ServiceBehavior(ConcurrencyMode = ConcurrencyMode.Reentrant)]
+    [ServiceBehavior(ConcurrencyMode = ConcurrencyMode.Multiple)]
     public class MessageServer : IMessage
     {
         private static Logger log = LogManager.GetCurrentClassLogger();
@@ -37,14 +37,14 @@ namespace TrakHound.DataClient.SystemTray.Messages
                 {
                     case "notify":
 
-                        var notifyIcon = DataClientSystemTray.NotifyIcon;
+                        var notifyIcon = SystemTrayMenu.NotifyIcon;
                         notifyIcon.BalloonTipTitle = "TrakHound DataClient";
                         notifyIcon.BalloonTipText = data.Text;
                         notifyIcon.Icon = Properties.Resources.dataclient;
                         notifyIcon.ShowBalloonTip(5000);
                         break;
 
-                    case "status": DataClientSystemTray.SetHeader(data.Text); break;
+                    case "status": SystemTrayMenu.SetHeader(data.Text); break;
                 }
             }
 

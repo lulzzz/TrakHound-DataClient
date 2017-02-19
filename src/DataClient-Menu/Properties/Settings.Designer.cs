@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace TrakHound.DataClient.SystemTray.Properties {
+namespace TrakHound.DataClient.Menu.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
@@ -20,18 +20,6 @@ namespace TrakHound.DataClient.SystemTray.Properties {
         public static Settings Default {
             get {
                 return defaultInstance;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("True")]
-        public bool ShowMessage {
-            get {
-                return ((bool)(this["ShowMessage"]));
-            }
-            set {
-                this["ShowMessage"] = value;
             }
         }
     }

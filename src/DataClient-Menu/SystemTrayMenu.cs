@@ -7,21 +7,24 @@ using NLog;
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reflection;
+using System.ServiceProcess;
 using System.Windows.Forms;
-using WCF = TrakHound.Api.v2.WCF;
 
-namespace TrakHound.DataClient.SystemTray
+namespace TrakHound.DataClient.Menu
 {
-    public class DataClientSystemTray : ApplicationContext
+    public class SystemTrayMenu : ApplicationContext
     {
+        private const string SERVICE_NAME = "TrakHound-DataClient";
+
         private static Logger log = LogManager.GetCurrentClassLogger();
         private static MenuItem StatusMenuItem = new MenuItem() { Enabled = false };
 
         public static NotifyIcon NotifyIcon = new NotifyIcon();
        
 
-        public DataClientSystemTray()
+        public SystemTrayMenu()
         {
             NotifyIcon.Text = "TrakHound DataClient";
             NotifyIcon.Icon = Properties.Resources.dataclient;
@@ -44,12 +47,22 @@ namespace TrakHound.DataClient.SystemTray
 
         private void Start(object sender, EventArgs e)
         {
-            WCF.MessageClient.Send("trakhound-dataclient", new WCF.Message("command", "Start"));
+            var controller = ServiceController.GetServices().FirstOrDefault(s => s.ServiceName == SERVICE_NAME);
+            if (controller != null)
+            {
+                if (controller.Status != ServiceControllerStatus.Running) controller.Start();
+                else log.Info(SERVICE_NAME + " is already running");
+            }
         }
 
         private void Stop(object sender, EventArgs e)
         {
-            WCF.MessageClient.Send("trakhound-dataclient", new WCF.Message("command", "Stop"));
+            var controller = ServiceController.GetServices().FirstOrDefault(s => s.ServiceName == SERVICE_NAME);
+            if (controller != null)
+            {
+                if (controller.Status != ServiceControllerStatus.Stopped) controller.Stop();
+                else log.Info(SERVICE_NAME + " is already stopped");
+            }
         }
 
         private void OpenConfigurationFile(object sender, EventArgs e)
@@ -89,11 +102,17 @@ namespace TrakHound.DataClient.SystemTray
 
         private void Exit(object sender, EventArgs e)
         {
+            Exit();
+
+            Program.Exit();
+        }
+
+        public void Exit()
+        {
             // We must manually tidy up and remove the icon before we exit.
             // Otherwise it will be left behind until the user mouses over.
             NotifyIcon.Visible = false;
-
-            Application.Exit();
+            NotifyIcon.Dispose();
         }
     }
 }

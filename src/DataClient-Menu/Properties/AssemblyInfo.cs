@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("TrakHound DataClient SystemTray")]
+[assembly: AssemblyTitle("TrakHound DataClient Menu")]
 [assembly: AssemblyDescription("SystemTray Menu for TrakHound DataClient Application")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("TrakHound Inc.")]
-[assembly: AssemblyProduct("TrakHound DataClient SystemTray")]
+[assembly: AssemblyProduct("TrakHound DataClient Menu")]
 [assembly: AssemblyCopyright("© 2017 TrakHound Inc., All Rights Reserved")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("a4e8bd1f-234b-489c-8b48-aed7d4d9e7e3")]
+[assembly: Guid("a26ae1ca-c45b-4f56-b0e0-a6361f0ae4c7")]
 
 // Version information for an assembly consists of the following four values:
 //
@@ -29,5 +29,8 @@ using System.Runtime.InteropServices;
 //      Build Number
 //      Revision
 //
-[assembly: AssemblyVersion("1.0.0.0")]
-[assembly: AssemblyFileVersion("1.0.0.0")]
+// You can specify all the values or you can default the Build and Revision Numbers 
+// by using the '*' as shown below:
+// [assembly: AssemblyVersion("1.0.*")]
+[assembly: AssemblyVersion("1.0.0.*")]
+[assembly: AssemblyFileVersion("1.0.0.*")]
