@@ -8,7 +8,7 @@ using System;
 using System.ServiceModel;
 using TrakHound.Api.v2.WCF;
 
-namespace TrakHound.DataClient.Messages
+namespace TrakHound.DataClient
 {
     [ServiceBehavior(ConcurrencyMode = ConcurrencyMode.Reentrant)]
     public class MessageServer : IMessage
@@ -43,9 +43,15 @@ namespace TrakHound.DataClient.Messages
                         {
                             switch (data.Text.ToLower())
                             {
-                                case "start": Program.Start(); break;
+                                case "start":
+                                    if (Program.RunAsService) Program.StartService();
+                                    else Program.Start();
+                                    break;
 
-                                case "stop": Program.Stop(); break;
+                                case "stop":
+                                    if (Program.RunAsService) Program.StopService();
+                                    else Program.Stop();
+                                    break;
                             }
                         }
 
