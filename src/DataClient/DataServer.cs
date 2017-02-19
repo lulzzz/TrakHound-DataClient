@@ -186,15 +186,18 @@ namespace TrakHound.DataClient
                 // Add Archive DataGroups
                 foreach (var sample in FilterSamples(samples, CaptureMode.ARCHIVE))
                 {
-                    if (!sampleSendList.Exists(o => o.Id == sample.Id)) sampleSendList.Add(sample);
-                    log.Trace("ARCHIVE : " + sample.Id + " : " + sample.Timestamp + " : " + sample.CDATA + " : " + sample.Condition);
+                    sampleSendList.Add(sample);
+                    log.Info(sample.StreamDataType.ToString() + " : " + sample.Id + " : " + sample.Timestamp + " : " + sample.CDATA + " : " + sample.Condition);
                 }
 
                 // Add Current DataGroups
                 foreach (var sample in FilterSamples(samples, CaptureMode.CURRENT))
                 {
-                    if (!sampleSendList.Exists(o => o.Id == sample.Id)) sampleSendList.Add(sample);
-                    log.Trace("CURRENT : " + sample.Id + " : " + sample.Timestamp + " : " + sample.CDATA + " : " + sample.Condition);
+                    if (!sampleSendList.Exists(o => o.Id == sample.Id))
+                    {
+                        sampleSendList.Add(sample);
+                        log.Trace("CURRENT : " + sample.Id + " : " + sample.Timestamp + " : " + sample.CDATA + " : " + sample.Condition);
+                    }
                 }
 
                 added.AddRange(sampleSendList);
@@ -213,8 +216,12 @@ namespace TrakHound.DataClient
                     if (added.Count > MAX_SEND_COUNT)
                     {
                         var bufferList = added.GetRange(MAX_SEND_COUNT, added.Count - MAX_SEND_COUNT);
-                        Buffer.Add(bufferList.FindAll(o => o.StreamDataType != StreamDataType.CURRENT_SAMPLE));
-                        log.Info(Hostname + " : " + bufferList.Count + " Added to Buffer. Exceeded Max Send Count.");
+                        bufferList = bufferList.FindAll(o => o.StreamDataType != StreamDataType.CURRENT_SAMPLE);
+                        if (bufferList.Count > 0)
+                        {
+                            Buffer.Add(bufferList);
+                            log.Info(Hostname + " : " + bufferList.Count + " Added to Buffer. Exceeded Max Send Count.");
+                        }
                     }
                 }
                 else
@@ -244,8 +251,10 @@ namespace TrakHound.DataClient
             foreach (var dataGroup in DataGroups.FindAll(o => o.CaptureMode == captureMode))
             {
                 var filtered = samples.FindAll(o => dataGroup.CheckFilters(o));
-                foreach (var sample in filtered)
+                foreach (var s in filtered)
                 {
+                    var sample = s.Copy(); 
+
                     // Set the StreamDataType
                     if (captureMode == CaptureMode.ARCHIVE) sample.SetStreamDataType(StreamDataType.ARCHIVED_SAMPLE);
                     else sample.SetStreamDataType(StreamDataType.CURRENT_SAMPLE);
@@ -265,8 +274,10 @@ namespace TrakHound.DataClient
                         {
                             // Find most current samples for the group's filters
                             var currentFiltered = DataClient.Samples.ToList().FindAll(o => group.CheckFilters(o));
-                            foreach (var currentSample in currentFiltered)
+                            foreach (var s1 in currentFiltered)
                             {
+                                var currentSample = s.Copy();
+
                                 // Set the StreamDataType
                                 if (captureMode == CaptureMode.ARCHIVE) currentSample.SetStreamDataType(StreamDataType.ARCHIVED_SAMPLE);
                                 else currentSample.SetStreamDataType(StreamDataType.CURRENT_SAMPLE);
@@ -325,8 +336,12 @@ namespace TrakHound.DataClient
         {
             if (Buffer != null)
             {
-                Buffer.Add(streamData.FindAll(o => o.StreamDataType != StreamDataType.CURRENT_SAMPLE));
-                log.Warn(Hostname + " : " + streamData.Count + " Failed to Send. Added to Buffer");
+                var bufferItems = streamData.FindAll(o => o.StreamDataType != StreamDataType.CURRENT_SAMPLE);
+                if (bufferItems.Count > 0)
+                {
+                    Buffer.Add(bufferItems);
+                    log.Warn(Hostname + " : " + bufferItems.Count + " Failed to Send. Added to Buffer");
+                }
             }
             else
             {
