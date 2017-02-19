@@ -26,6 +26,8 @@ namespace TrakHound.DataClient
         private static Logger log = LogManager.GetCurrentClassLogger();
 
         private object _lock = new object();
+        private int devicesFound = 0;
+        private MTConnectSniffer.MTConnectDevice foundDevice;
 
 
         private static List<ConnectionDefinitionData> _connectionDefinitions = new List<ConnectionDefinitionData>();
@@ -72,25 +74,11 @@ namespace TrakHound.DataClient
         public Configuration Configuration { get { return _configuration; } }
 
 
-        public DataClient(string configPath)
+        public DataClient(Configuration config)
         {
             PrintHeader();
 
-            var config = Configuration.Read(configPath);
-            if (config != null)
-            {
-                _configuration = config;
-
-                log.Info("Configuration file read from '" + configPath + "'");
-                log.Info("---------------------------");
-            }
-            else
-            {
-                // Throw exception that no configuration file was found
-                var ex = new Exception("No Configuration File Found. Exiting TrakHound-DataClient!");
-                log.Error(ex);
-                throw ex;
-            }
+            _configuration = config;
         }
 
         public void Start()
@@ -129,8 +117,11 @@ namespace TrakHound.DataClient
                 log.Info("---------------------------");
             }
 
-            WCF.MessageClient.Send("trakhound-dataclient-systemtray", new WCF.Message("Notify", "Started"));
-            WCF.MessageClient.Send("trakhound-dataclient-systemtray", new WCF.Message("Status", "Running"));
+            if (_configuration.SendMessages)
+            {
+                WCF.MessageClient.Send("trakhound-dataclient-menu", new WCF.Message("Notify", "Started"));
+                WCF.MessageClient.Send("trakhound-dataclient-menu", new WCF.Message("Status", "Running"));
+            }
         }
 
         public void Stop()
@@ -147,22 +138,42 @@ namespace TrakHound.DataClient
             var deviceFinder = _configuration.DeviceFinder;
             if (deviceFinder != null) deviceFinder.Stop();
 
-            WCF.MessageClient.Send("trakhound-dataclient-systemtray", new WCF.Message("Notify", "Stopped"));
-            WCF.MessageClient.Send("trakhound-dataclient-systemtray", new WCF.Message("Status", "Stopped"));
-        }
 
+            if (_configuration.SendMessages)
+            {
+                WCF.MessageClient.Send("trakhound-dataclient-menu", new WCF.Message("Notify", "Stopped"));
+                WCF.MessageClient.Send("trakhound-dataclient-menu", new WCF.Message("Status", "Stopped"));
+            }
+        }
 
         private void DeviceFinder_SearchCompleted(long milliseconds)
         {
+            if (_configuration.SendMessages)
+            {
+                if (devicesFound > 1)
+                {
+                    var text = string.Format("{0} New Devices Found", devicesFound);
+                    var message = new WCF.Message("Notify", text);
+                    WCF.MessageClient.Send("trakhound-dataclient-menu", message);
+                }
+                else if (devicesFound > 0 && foundDevice != null)
+                {
+                    var text = string.Format("New Device Found ({0} @ {1}:{2})", foundDevice.DeviceName, foundDevice.IpAddress, foundDevice.Port);
+                    var message = new WCF.Message("Notify", text);
+                    WCF.MessageClient.Send("trakhound-dataclient-menu", message);
+                }
+            }
+
+            devicesFound = 0;
+            foundDevice = null;
+
             Configuration.Save();
         }
 
         private void DeviceFinder_DeviceFound(MTConnectSniffer.MTConnectDevice device)
         {
-            var text = string.Format("Device Found ({0} @ {1}:{2})", device.DeviceName, device.IpAddress, device.Port);
-            var message = new WCF.Message("Notify", text);
-            WCF.MessageClient.Send("trakhound-dataclient-systemtray", message);
-
+            foundDevice = device;
+            devicesFound++;
             AddDevice(device);
         }
 
