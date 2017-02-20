@@ -12,7 +12,6 @@ using System.Xml.Serialization;
 using TrakHound.Api.v2;
 using TrakHound.Api.v2.Data;
 using TrakHound.Api.v2.Streams.Data;
-using MTConnectAssets = MTConnect.MTConnectAssets;
 using MTConnectDevices = MTConnect.MTConnectDevices;
 using MTConnectStreams = MTConnect.MTConnectStreams;
 
