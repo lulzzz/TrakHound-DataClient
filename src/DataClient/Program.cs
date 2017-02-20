@@ -21,7 +21,6 @@ namespace TrakHound.DataClient
         private static Logger log = LogManager.GetCurrentClassLogger();
         private static DataClient client;
         private static ServiceBase service;
-        internal static bool RunAsService;
         private static Timer menuUpdateTimer;
         private static bool started = false;
 
@@ -65,8 +64,6 @@ namespace TrakHound.DataClient
             }
             else
             {
-                RunAsService = true;
-
                 StartService();
             }
         }
