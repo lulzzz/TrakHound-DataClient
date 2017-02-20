@@ -14,7 +14,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using TrakHound.Api.v2.Streams;
 using TrakHound.Api.v2.Streams.Data;
-using WCF = TrakHound.Api.v2.WCF;
+using Messaging = TrakHound.Api.v2.Messaging;
 
 namespace TrakHound.DataClient
 {
@@ -119,8 +119,8 @@ namespace TrakHound.DataClient
 
             if (_configuration.SendMessages)
             {
-                WCF.MessageClient.Send("trakhound-dataclient-menu", new WCF.Message("Notify", "Started"));
-                WCF.MessageClient.Send("trakhound-dataclient-menu", new WCF.Message("Status", "Running"));
+                Messaging.Message.Send("trakhound-dataclient-menu", "Notify", "Started");
+                Messaging.Message.Send("trakhound-dataclient-menu", "Status", "Running");
             }
         }
 
@@ -141,8 +141,8 @@ namespace TrakHound.DataClient
 
             if (_configuration.SendMessages)
             {
-                WCF.MessageClient.Send("trakhound-dataclient-menu", new WCF.Message("Notify", "Stopped"));
-                WCF.MessageClient.Send("trakhound-dataclient-menu", new WCF.Message("Status", "Stopped"));
+                Messaging.Message.Send("trakhound-dataclient-menu", "Notify", "Stopped");
+                Messaging.Message.Send("trakhound-dataclient-menu", "Status", "Stopped");
             }
         }
 
@@ -153,14 +153,12 @@ namespace TrakHound.DataClient
                 if (devicesFound > 1)
                 {
                     var text = string.Format("{0} New Devices Found", devicesFound);
-                    var message = new WCF.Message("Notify", text);
-                    WCF.MessageClient.Send("trakhound-dataclient-menu", message);
+                    Messaging.Message.Send("trakhound-dataclient-menu", "Notify", text);
                 }
                 else if (devicesFound > 0 && foundDevice != null)
                 {
                     var text = string.Format("New Device Found ({0} @ {1}:{2})", foundDevice.DeviceName, foundDevice.IpAddress, foundDevice.Port);
-                    var message = new WCF.Message("Notify", text);
-                    WCF.MessageClient.Send("trakhound-dataclient-menu", message);
+                    Messaging.Message.Send("trakhound-dataclient-menu", "Notify", text);
                 }
             }
 

@@ -47,21 +47,35 @@ namespace TrakHound.DataClient.Menu
 
         private void Start(object sender, EventArgs e)
         {
-            var controller = ServiceController.GetServices().FirstOrDefault(s => s.ServiceName == SERVICE_NAME);
-            if (controller != null)
+            try
             {
-                if (controller.Status != ServiceControllerStatus.Running) controller.Start();
-                else log.Info(SERVICE_NAME + " is already running");
+                var controller = ServiceController.GetServices().FirstOrDefault(s => s.ServiceName == SERVICE_NAME);
+                if (controller != null)
+                {
+                    if (controller.Status != ServiceControllerStatus.Running) controller.Start();
+                    else log.Info(SERVICE_NAME + " is already running");
+                }
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
             }
         }
 
         private void Stop(object sender, EventArgs e)
         {
-            var controller = ServiceController.GetServices().FirstOrDefault(s => s.ServiceName == SERVICE_NAME);
-            if (controller != null)
+            try
             {
-                if (controller.Status != ServiceControllerStatus.Stopped) controller.Stop();
-                else log.Info(SERVICE_NAME + " is already stopped");
+                var controller = ServiceController.GetServices().FirstOrDefault(s => s.ServiceName == SERVICE_NAME);
+                if (controller != null)
+                {
+                    if (controller.Status != ServiceControllerStatus.Stopped) controller.Stop();
+                    else log.Info(SERVICE_NAME + " is already stopped");
+                }
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
             }
         }
 

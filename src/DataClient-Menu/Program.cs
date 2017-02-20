@@ -8,7 +8,7 @@ using System;
 using System.Security.Permissions;
 using System.Threading;
 using System.Windows.Forms;
-using WCF = TrakHound.Api.v2.WCF;
+using Messaging = TrakHound.Api.v2.Messaging;
 
 namespace TrakHound.DataClient.Menu
 {
@@ -19,6 +19,7 @@ namespace TrakHound.DataClient.Menu
         private static Logger log = LogManager.GetCurrentClassLogger();
         private static SystemTrayMenu menu;
         private static ManualResetEvent stop;
+        private static Messaging.Server messageServer;
 
         /// <summary>
         /// The main entry point for the application.
@@ -47,25 +48,48 @@ namespace TrakHound.DataClient.Menu
             ThreadPool.QueueUserWorkItem(new WaitCallback((o) =>
             {
                 bool started = false;
-                while (!started && !stop.WaitOne(MESSAGE_SERVER_RETRY_INTERVAL, true))
+                do
                 {
                     try
                     {
-                        var MessageServer = WCF.Server.Create<MessageServer>("trakhound-dataclient-menu");
+                        messageServer = new Messaging.Server("trakhound-dataclient-menu");
+                        messageServer.MessageReceived += MessageServer_MessageReceived;
+                        messageServer.Start();
                         started = true;
                     }
                     catch (Exception ex)
                     {
                         log.Trace(ex);
                     }
-                }
+                } while (!started && !stop.WaitOne(MESSAGE_SERVER_RETRY_INTERVAL, true));
             }));
+        }
+
+        private static void MessageServer_MessageReceived(Messaging.Message message)
+        {
+            if (message != null && !string.IsNullOrEmpty(message.Id))
+            {
+                switch (message.Id.ToLower())
+                {
+                    case "notify":
+
+                        var notifyIcon = SystemTrayMenu.NotifyIcon;
+                        notifyIcon.BalloonTipTitle = "TrakHound DataClient";
+                        notifyIcon.BalloonTipText = message.Text;
+                        notifyIcon.Icon = Properties.Resources.dataclient;
+                        notifyIcon.ShowBalloonTip(5000);
+                        break;
+
+                    case "status": SystemTrayMenu.SetHeader(message.Text); break;
+                }
+            }     
         }
 
         public static void Exit()
         {
             if (stop != null) stop.Set();
             if (menu != null) menu.Exit();
+            if (messageServer != null) messageServer.Stop();
             Application.Exit();
         }
 
