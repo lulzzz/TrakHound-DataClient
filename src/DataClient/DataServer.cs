@@ -187,7 +187,7 @@ namespace TrakHound.DataClient
                 foreach (var sample in FilterSamples(samples, CaptureMode.ARCHIVE))
                 {
                     sampleSendList.Add(sample);
-                    log.Info(sample.StreamDataType.ToString() + " : " + sample.Id + " : " + sample.Timestamp + " : " + sample.CDATA + " : " + sample.Condition);
+                    log.Trace(sample.StreamDataType.ToString() + " : " + sample.Id + " : " + sample.Timestamp + " : " + sample.CDATA + " : " + sample.Condition);
                 }
 
                 // Add Current DataGroups

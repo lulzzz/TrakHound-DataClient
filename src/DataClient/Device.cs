@@ -8,6 +8,7 @@ using MTConnect.Clients;
 using NLog;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Xml.Serialization;
 using TrakHound.Api.v2;
 using TrakHound.Api.v2.Data;
@@ -26,7 +27,7 @@ namespace TrakHound.DataClient
 
         private string agentUrl;
 
-
+        [XmlIgnore]
         public ConnectionDefinitionData AgentConnection;
 
         private MTConnectClient _agentClient;
@@ -225,9 +226,40 @@ namespace TrakHound.DataClient
             _agentClient.ProbeReceived += DevicesSuccessful;
             _agentClient.CurrentReceived += StreamsSuccessful;
             _agentClient.SampleReceived += StreamsSuccessful;
+            _agentClient.ConnectionError += _agentClient_ConnectionError;
 
             // Start the MTConnectClient
             _agentClient.Start();
+        }
+
+        private void _agentClient_ConnectionError(Exception ex)
+        {
+            log.Info("Error Connecting to MTConnect Agent @ " + _agentClient.BaseUrl);
+            log.Trace(ex);
+
+            var dataItems = DataClient.DataItemDefinitions.ToList().FindAll(o => o.DeviceId == DeviceId);
+            if (dataItems != null)
+            {
+                var samples = new List<SampleData>();
+
+                foreach (var dataItem in dataItems)
+                {
+                    var obj = new SampleData();
+
+                    obj.DeviceId = DeviceId;
+
+                    obj.Id = dataItem.Id;
+                    obj.AgentInstanceId = -1;
+                    obj.Sequence = -1;
+                    obj.Timestamp = DateTime.UtcNow;
+                    obj.CDATA = "UNAVAILABLE";
+                    obj.Condition = "UNAVAILBLE";
+
+                    samples.Add(obj);
+                }
+
+                if (samples.Count > 0) SamplesReceived?.Invoke(samples);
+            }
         }
 
         private void _agentClient_Started()
@@ -351,6 +383,14 @@ namespace TrakHound.DataClient
             obj.SampleInterval = device.SampleInterval;
             obj.SampleRate = device.SampleRate;
             obj.Iso841Class = device.Iso841Class;
+            if (device.Description != null)
+            {
+                obj.Manufacturer = device.Description.Manufacturer;
+                obj.Model = device.Description.Model;
+                obj.SerialNumber = device.Description.SerialNumber;
+                obj.Station = device.Description.Station;
+                obj.Description = device.Description.CDATA;
+            }
 
             return obj;
         }

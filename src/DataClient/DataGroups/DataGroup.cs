@@ -57,37 +57,40 @@ namespace TrakHound.DataClient.DataGroups
         /// <returns>A boolean indicating whether or not the Sample passes the filters</returns>
         public bool CheckFilters(SampleData sample)
         {
-            string deviceId = sample.DeviceId;
-
-            var dataDefinition = DataClient.DataItemDefinitions.ToList().Find(o => o.DeviceId == deviceId && o.Id == sample.Id);
-            if (dataDefinition != null)
+            if (sample != null)
             {
-                bool match = Allowed == null || Allowed.Count == 0;
+                string deviceId = sample.DeviceId;
 
-                // Search Allowed Filters
-                foreach (var filter in Allowed)
+                var dataDefinition = DataClient.DataItemDefinitions.ToList().Find(o => o.DeviceId == deviceId && o.Id == sample.Id);
+                if (dataDefinition != null)
                 {
-                    var dataFilter = new DataFilter(filter, dataDefinition, DataClient.ComponentDefinitions.ToList<ComponentDefinition>());
-                    match = dataFilter.IsMatch();
-                    if (match) break;
-                }
+                    bool match = Allowed == null || Allowed.Count == 0;
 
-                if (match)
-                {
-                    // Search Denied Filters
-                    foreach (var filter in Denied)
+                    // Search Allowed Filters
+                    foreach (var filter in Allowed)
                     {
                         var dataFilter = new DataFilter(filter, dataDefinition, DataClient.ComponentDefinitions.ToList<ComponentDefinition>());
-                        bool denied = dataFilter.IsMatch();
-                        if (denied)
+                        match = dataFilter.IsMatch();
+                        if (match) break;
+                    }
+
+                    if (match)
+                    {
+                        // Search Denied Filters
+                        foreach (var filter in Denied)
                         {
-                            match = false;
-                            break;
+                            var dataFilter = new DataFilter(filter, dataDefinition, DataClient.ComponentDefinitions.ToList<ComponentDefinition>());
+                            bool denied = dataFilter.IsMatch();
+                            if (denied)
+                            {
+                                match = false;
+                                break;
+                            }
                         }
                     }
-                }
 
-                return match;
+                    return match;
+                }
             }
 
             return false;
