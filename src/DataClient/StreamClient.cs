@@ -56,6 +56,7 @@ namespace TrakHound.DataClient
         public delegate void SendFailedHandler(List<IStreamData> streamData);
         public event SendFailedHandler SendFailed;
 
+
         public int Timeout { get; set; }
         public int ReconnectionDelay { get; set; }
 
@@ -133,6 +134,7 @@ namespace TrakHound.DataClient
                 do
                 {
                     var sendList = new List<IStreamData>();
+                    var authFailed = new List<IStreamData>();
 
                     lock (_lock)
                     {
@@ -156,9 +158,16 @@ namespace TrakHound.DataClient
                             // Send each Item
                             foreach (var item in sendList)
                             {
-                                var responseCode = SendData(item);
-                                if (responseCode == 200) successfullySent.Add(item);
-                                else failedToSend.Add(item);
+                                if (!authFailed.Exists(o => o.DeviceId == item.DeviceId))
+                                {
+                                    var responseCode = SendData(item);
+                                    if (responseCode == 200) successfullySent.Add(item);
+                                    else
+                                    {
+                                        if (responseCode == 401) authFailed.Add(item);
+                                        failedToSend.Add(item);
+                                    }
+                                }
                             }
 
                             // Raise Events
