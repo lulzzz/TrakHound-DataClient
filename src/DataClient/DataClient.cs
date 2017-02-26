@@ -14,7 +14,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using TrakHound.Api.v2.Streams;
 using TrakHound.Api.v2.Streams.Data;
-using Messaging = TrakHound.Api.v2.Messaging;
 
 namespace TrakHound.DataClient
 {
@@ -116,12 +115,6 @@ namespace TrakHound.DataClient
 
                 log.Info("---------------------------");
             }
-
-            if (_configuration.SendMessages)
-            {
-                Messaging.Message.Send("trakhound-dataclient-menu", "Notify", "Started");
-                Messaging.Message.Send("trakhound-dataclient-menu", "Status", "Running");
-            }
         }
 
         public void Stop()
@@ -137,31 +130,10 @@ namespace TrakHound.DataClient
             // Stop the Device Finder
             var deviceFinder = _configuration.DeviceFinder;
             if (deviceFinder != null) deviceFinder.Stop();
-
-
-            if (_configuration.SendMessages)
-            {
-                Messaging.Message.Send("trakhound-dataclient-menu", "Notify", "Stopped");
-                Messaging.Message.Send("trakhound-dataclient-menu", "Status", "Stopped");
-            }
         }
 
         private void DeviceFinder_SearchCompleted(long milliseconds)
         {
-            if (_configuration.SendMessages)
-            {
-                if (devicesFound > 1)
-                {
-                    var text = string.Format("{0} New Devices Found", devicesFound);
-                    Messaging.Message.Send("trakhound-dataclient-menu", "Notify", text);
-                }
-                else if (devicesFound > 0 && foundDevice != null)
-                {
-                    var text = string.Format("New Device Found ({0} @ {1}:{2})", foundDevice.DeviceName, foundDevice.IpAddress, foundDevice.Port);
-                    Messaging.Message.Send("trakhound-dataclient-menu", "Notify", text);
-                }
-            }
-
             devicesFound = 0;
             foundDevice = null;
 

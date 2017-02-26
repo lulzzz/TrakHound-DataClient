@@ -7,19 +7,23 @@ using NLog;
 using System;
 using System.Security.Permissions;
 using System.Threading;
+using System.Timers;
 using System.Windows.Forms;
-using Messaging = TrakHound.Api.v2.Messaging;
+using System.ServiceProcess;
 
 namespace TrakHound.DataClient.Menu
 {
     static class Program
     {
-        private const int MESSAGE_SERVER_RETRY_INTERVAL = 2000;
+        private const int SERVICE_STATUS_INTERVAL = 1000;
+        private const string SERVICE_NAME = "TrakHound-DataClient";
 
         private static Logger log = LogManager.GetCurrentClassLogger();
         private static SystemTrayMenu menu;
         private static ManualResetEvent stop;
-        private static Messaging.Server messageServer;
+        private static System.Timers.Timer serviceStatusTimer;
+        private static ServiceControllerStatus previousStatus;
+
 
         /// <summary>
         /// The main entry point for the application.
@@ -27,7 +31,7 @@ namespace TrakHound.DataClient.Menu
         [STAThread]
         static void Main()
         {
-            StartMessageServer();
+            StartServiceStatusTimer();
             StartMenu();
         }
 
@@ -41,55 +45,46 @@ namespace TrakHound.DataClient.Menu
             Application.Run(menu);
         }
 
-        private static void StartMessageServer()
+        private static void StartServiceStatusTimer()
         {
-            stop = new ManualResetEvent(false);
-
-            ThreadPool.QueueUserWorkItem(new WaitCallback((o) =>
-            {
-                bool started = false;
-                do
-                {
-                    try
-                    {
-                        messageServer = new Messaging.Server("trakhound-dataclient-menu");
-                        messageServer.MessageReceived += MessageServer_MessageReceived;
-                        messageServer.Start();
-                        started = true;
-                    }
-                    catch (Exception ex)
-                    {
-                        log.Trace(ex);
-                    }
-                } while (!started && !stop.WaitOne(MESSAGE_SERVER_RETRY_INTERVAL, true));
-            }));
+            serviceStatusTimer = new System.Timers.Timer();
+            serviceStatusTimer.Interval = SERVICE_STATUS_INTERVAL;
+            serviceStatusTimer.Elapsed += ServiceStatusTimer_Elapsed;
+            serviceStatusTimer.Start();
         }
 
-        private static void MessageServer_MessageReceived(Messaging.Message message)
+        private static void ServiceStatusTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
-            if (message != null && !string.IsNullOrEmpty(message.Id))
+            var sc = new ServiceController(SERVICE_NAME);
+            if (sc != null)
             {
-                switch (message.Id.ToLower())
-                {
-                    case "notify":
+                var status = sc.Status;
 
+                if (status != previousStatus)
+                {
+                    // Update Menu Status Label
+                    SystemTrayMenu.SetHeader(status.ToString());
+
+                    // Create Notification
+                    if (status == ServiceControllerStatus.Running || status == ServiceControllerStatus.Stopped)
+                    {
                         var notifyIcon = SystemTrayMenu.NotifyIcon;
                         notifyIcon.BalloonTipTitle = "TrakHound DataClient";
-                        notifyIcon.BalloonTipText = message.Text;
+                        notifyIcon.BalloonTipText = status.ToString();
                         notifyIcon.Icon = Properties.Resources.dataclient;
                         notifyIcon.ShowBalloonTip(5000);
-                        break;
-
-                    case "status": SystemTrayMenu.SetHeader(message.Text); break;
+                    }
                 }
-            }     
+
+                previousStatus = status;
+            }
         }
 
         public static void Exit()
         {
             if (stop != null) stop.Set();
             if (menu != null) menu.Exit();
-            if (messageServer != null) messageServer.Stop();
+            if (serviceStatusTimer != null) serviceStatusTimer.Stop();
             Application.Exit();
         }
 

@@ -9,20 +9,14 @@ using System.Configuration.Install;
 using System.IO;
 using System.Reflection;
 using System.ServiceProcess;
-using System.Timers;
-using Messaging = TrakHound.Api.v2.Messaging;
 
 namespace TrakHound.DataClient
 {
     static class Program
     {
-        private const int MENU_UPDATE_INTERVAL = 2000;
-
         private static Logger log = LogManager.GetCurrentClassLogger();
         private static DataClient client;
         private static ServiceBase service;
-        private static Timer menuUpdateTimer;
-        private static bool started = false;
 
         /// <summary>
         /// The main entry point for the application.
@@ -89,20 +83,9 @@ namespace TrakHound.DataClient
                 log.Info("Configuration file read from '" + configPath + "'");
                 log.Info("---------------------------");
 
-                if (config.SendMessages)
-                {
-                    // Start Menu Update Timer
-                    menuUpdateTimer = new Timer();
-                    menuUpdateTimer.Elapsed += UpdateMenuStatus;
-                    menuUpdateTimer.Interval = MENU_UPDATE_INTERVAL;
-                    menuUpdateTimer.Start();
-                }
-
                 // Create a new DataClient
                 client = new DataClient(config);
                 client.Start();
-
-                started = true;
             }
             else
             {
@@ -115,15 +98,7 @@ namespace TrakHound.DataClient
 
         public static void Stop()
         {
-            if (menuUpdateTimer != null)
-            {
-                menuUpdateTimer.Stop();
-                menuUpdateTimer.Dispose();
-            }
-
             if (client != null) client.Stop();
-
-            started = false;
         }
 
         private static void InstallService()
@@ -134,12 +109,6 @@ namespace TrakHound.DataClient
         private static void UninstallService()
         {
             ManagedInstallerClass.InstallHelper(new string[] { "/u", Assembly.GetExecutingAssembly().Location });
-        }
-
-        private static void UpdateMenuStatus(object sender, ElapsedEventArgs e)
-        {
-            string status = started ? "Running" : "Stopped";
-            Messaging.Message.Send("trakhound-dataclient-menu", "Status", status);
         }
     }
 }
