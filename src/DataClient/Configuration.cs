@@ -34,12 +34,6 @@ namespace TrakHound.DataClient
         public string Path { get { return _path; } }
 
         /// <summary>
-        /// Gets or Sets whether the DataClient sends messages to external applications (ex. System Tray Menu)
-        /// </summary>
-        [XmlAttribute("sendMessages")]
-        public bool SendMessages { get; set; }
-
-        /// <summary>
         /// Gets or Sets the DeviceFinder to use for finding new MTConnect devices on the network
         /// </summary>
         [XmlElement("DeviceFinder")]
@@ -61,7 +55,6 @@ namespace TrakHound.DataClient
 
         public Configuration()
         {
-            SendMessages = true;
             Devices = new List<Device>();
             DataServers = new List<DataServer>();
         }
