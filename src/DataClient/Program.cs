@@ -77,6 +77,11 @@ namespace TrakHound.DataClient
         {
             // Get the default Configuration file path
             string configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Configuration.FILENAME);
+            string defaultPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Configuration.DEFAULT_FILENAME);
+            if (!File.Exists(configPath) && File.Exists(defaultPath))
+            {
+                File.Copy(defaultPath, configPath);
+            } 
             var config = Configuration.Read(configPath);
             if (config != null)
             {

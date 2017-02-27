@@ -25,6 +25,7 @@ namespace TrakHound.DataClient
         /// </summary>
         [XmlIgnore]
         public const string FILENAME = "client.config";
+        public const string DEFAULT_FILENAME = "client.config.default";
 
         protected string _path;
         /// <summary>

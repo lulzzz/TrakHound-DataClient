@@ -78,8 +78,8 @@
     <Reference Include="System.Net.Http" />
     <Reference Include="System.ServiceProcess" />
     <Reference Include="System.Xml" />
-    <Reference Include="TrakHound-Api, Version=1.4.1.2765, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\TrakHound-Api.1.4.1.2765\lib\net40\TrakHound-Api.dll</HintPath>
+    <Reference Include="TrakHound-Api, Version=1.5.0.8948, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\TrakHound-Api.1.5.0.8948\lib\net40\TrakHound-Api.dll</HintPath>
       <Private>True</Private>
     </Reference>
   </ItemGroup>
@@ -120,7 +120,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="client.config">
+    <None Include="client.config.default">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <SubType>Designer</SubType>
     </None>
