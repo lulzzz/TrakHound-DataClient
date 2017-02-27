@@ -170,6 +170,9 @@ namespace TrakHound.DataClient
         {
             var added = new List<IStreamData>();
 
+            // Add Statuses
+            added.AddRange(data.OfType<StatusData>().ToList());
+
             // Add any Definitions
             added.AddRange(data.OfType<ConnectionDefinitionData>().ToList());
             added.AddRange(data.OfType<AgentDefinitionData>().ToList());
@@ -336,7 +339,8 @@ namespace TrakHound.DataClient
         {
             if (Buffer != null)
             {
-                var bufferItems = streamData.FindAll(o => o.StreamDataType != StreamDataType.CURRENT_SAMPLE);
+                // Don't buffer Current Samples or Statuses
+                var bufferItems = streamData.FindAll(o => o.StreamDataType != StreamDataType.CURRENT_SAMPLE && o.StreamDataType != StreamDataType.STATUS);
                 if (bufferItems.Count > 0)
                 {
                     Buffer.Add(bufferItems);

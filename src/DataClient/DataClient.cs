@@ -24,7 +24,7 @@ namespace TrakHound.DataClient
     {
         private static Logger log = LogManager.GetCurrentClassLogger();
 
-        private object _lock = new object();
+        internal static object _lock = new object();
         private int devicesFound = 0;
         private MTConnectSniffer.MTConnectDevice foundDevice;
 
@@ -64,6 +64,12 @@ namespace TrakHound.DataClient
         /// Gets a list of current Samples that have been read. Similar to the MTConnect Current request. Read Only.
         /// </summary>
         public static ReadOnlyCollection<SampleData> Samples { get { return _samples.AsReadOnly(); } }
+
+        private static List<StatusData> _statuses = new List<StatusData>();
+        /// <summary>
+        /// Gets a list of Statuses. Read Only.
+        /// </summary>
+        public static ReadOnlyCollection<StatusData> Statuses { get { return _statuses.AsReadOnly(); } }
 
 
         private Configuration _configuration;
@@ -176,6 +182,7 @@ namespace TrakHound.DataClient
             device.ComponentDefinitionsReceived += ComponentDefinitionsReceived;
             device.DataItemDefinitionsReceived += DataDefinitionsReceived;
             device.SamplesReceived += SamplesReceived;
+            device.StatusUpdated += StatusUpdated;
             device.Start();
 
             // Send Connection to DataServers
@@ -274,6 +281,22 @@ namespace TrakHound.DataClient
             foreach (var dataServer in Configuration.DataServers)
             {
                 dataServer.Add(samples.ToList<IStreamData>());
+            }
+        }
+
+        private void StatusUpdated(StatusData status)
+        {
+            lock (_lock)
+            {
+                int i = _statuses.FindIndex(o => o.DeviceId == status.DeviceId);
+                if (i >= 0) _statuses.RemoveAt(i);
+                _statuses.Add(status);
+            }
+
+            // Send to DataServers
+            foreach (var dataServer in Configuration.DataServers)
+            {
+                dataServer.Add(status);
             }
         }
 

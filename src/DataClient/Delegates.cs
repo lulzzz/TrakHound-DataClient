@@ -17,4 +17,6 @@ namespace TrakHound.DataClient
     public delegate void DeviceDefinitionsHandler(DeviceDefinitionData definition);
 
     public delegate void SamplesHandler(List<SampleData> samples);
+
+    public delegate void StatusHandler(StatusData status);
 }
