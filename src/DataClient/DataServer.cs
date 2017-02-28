@@ -184,17 +184,28 @@ namespace TrakHound.DataClient
             var samples = data.OfType<SampleData>().ToList();
             if (!samples.IsNullOrEmpty())
             {
+                List<DataItemDefinitionData> dataItemDefinitions = null;
+                List<ComponentDefinitionData> componentDefinitions = null;
+                List<SampleData> currentSamples = null;
+
+                lock (DataClient._lock)
+                {
+                    dataItemDefinitions = DataClient.DataItemDefinitions.ToList();
+                    componentDefinitions = DataClient.ComponentDefinitions.ToList();
+                    currentSamples = DataClient.Samples.ToList();
+                }
+
                 var sampleSendList = new List<SampleData>();
 
                 // Add Archive DataGroups
-                foreach (var sample in FilterSamples(samples, CaptureMode.ARCHIVE))
+                foreach (var sample in FilterSamples(samples, CaptureMode.ARCHIVE, dataItemDefinitions, componentDefinitions, currentSamples))
                 {
                     sampleSendList.Add(sample);
                     log.Trace(sample.StreamDataType.ToString() + " : " + sample.Id + " : " + sample.Timestamp + " : " + sample.CDATA + " : " + sample.Condition);
                 }
 
                 // Add Current DataGroups
-                foreach (var sample in FilterSamples(samples, CaptureMode.CURRENT))
+                foreach (var sample in FilterSamples(samples, CaptureMode.CURRENT, dataItemDefinitions, componentDefinitions, currentSamples))
                 {
                     if (!sampleSendList.Exists(o => o.Id == sample.Id))
                     {
@@ -247,13 +258,13 @@ namespace TrakHound.DataClient
             }
         }
 
-        private List<SampleData> FilterSamples(List<SampleData> samples, CaptureMode captureMode)
+        private List<SampleData> FilterSamples(List<SampleData> samples, CaptureMode captureMode, List<DataItemDefinitionData> dataItemDefinitions, List<ComponentDefinitionData> componentDefinitions, List<SampleData> currentSamples)
         {
             var l = new List<SampleData>();
 
             foreach (var dataGroup in DataGroups.FindAll(o => o.CaptureMode == captureMode))
             {
-                var filtered = samples.FindAll(o => dataGroup.CheckFilters(o));
+                var filtered = samples.FindAll(o => dataGroup.CheckFilters(o, dataItemDefinitions, componentDefinitions));
                 foreach (var s in filtered)
                 {
                     var sample = s.Copy(); 
@@ -276,7 +287,7 @@ namespace TrakHound.DataClient
                         if (group != null)
                         {
                             // Find most current samples for the group's filters
-                            var currentFiltered = DataClient.Samples.ToList().FindAll(o => group.CheckFilters(o));
+                            var currentFiltered = currentSamples.FindAll(o => group.CheckFilters(o, dataItemDefinitions, componentDefinitions));
                             foreach (var s1 in currentFiltered)
                             {
                                 var currentSample = s.Copy();

@@ -55,17 +55,8 @@ namespace TrakHound.DataClient.DataGroups
         /// </summary>
         /// <param name="sample">The Sample to check</param>
         /// <returns>A boolean indicating whether or not the Sample passes the filters</returns>
-        public bool CheckFilters(SampleData sample)
+        public bool CheckFilters(SampleData sample, List<DataItemDefinitionData> dataItemDefinitions, List<ComponentDefinitionData> componentDefinitions)
         {
-            List<DataItemDefinitionData> dataItemDefinitions = null;
-            List<ComponentDefinitionData> componentDefinitions = null;
-
-            lock(DataClient._lock)
-            {
-                dataItemDefinitions = DataClient.DataItemDefinitions.ToList();
-                componentDefinitions = DataClient.ComponentDefinitions.ToList();
-            }
-
             if (sample != null && dataItemDefinitions != null && componentDefinitions != null)
             {
                 string deviceId = sample.DeviceId;
@@ -99,6 +90,8 @@ namespace TrakHound.DataClient.DataGroups
                     }
 
                     return match;
+
+                    //return true;
                 }
             }
 

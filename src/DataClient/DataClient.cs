@@ -12,6 +12,7 @@ using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using TrakHound.Api.v2.Streams;
 using TrakHound.Api.v2.Streams.Data;
 
