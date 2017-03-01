@@ -148,8 +148,6 @@ namespace TrakHound.DataClient
 
         private bool ConnectToClient()
         {
-            log.Debug("Stream Client : Connecting to StreamClient @ " + _serverHostname + ":" + _port);
-
             int delay = 0;
 
             try
@@ -277,18 +275,14 @@ namespace TrakHound.DataClient
                 {
                     // Attempt to send data and get the Response Code back
                     var responseCode = WriteData(item);
-                    if (responseCode != 200)
+                    if (responseCode == 401) authFailed.Add(item);
+                    else if (responseCode != 200)
                     {
-                        // Add to authentication failed list
-                        if (responseCode == 401) authFailed.Add(item);
-                        else
-                        {
-                            // After 2 failed attempts. Break and try to reconnect.
-                            if (failures++ >= 2) break;
-                        }
-
-                        // Remove from queue
+                        // Add to failed
                         failed.Add(item);
+
+                        // After 2 failed attempts. Break and try to reconnect.
+                        if (failures++ >= 2) break;
                     }
                 }
             }

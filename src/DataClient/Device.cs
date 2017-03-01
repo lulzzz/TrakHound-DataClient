@@ -278,7 +278,7 @@ namespace TrakHound.DataClient
 
         private void StatusUpdateTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
-            lock (_lock) UpdateStatus(prev_connected, true);
+            lock (_lock) UpdateStatus(prev_connected, prev_available);
         }
 
         private void DevicesSuccessful(MTConnectDevices.Document document)
@@ -527,11 +527,8 @@ namespace TrakHound.DataClient
 
         private void UpdateStatus(bool connected, bool available)
         {
-            // Don't send Available if not connected also
-            bool avail = connected && available;
-
-            log.Info("Status Updated : " + DeviceId + " : Connected=" + connected + " : Available=" + avail);
-            StatusUpdated?.Invoke(Create(DeviceId, connected, avail));
+            log.Info("Status Updated : " + DeviceId + " : Connected=" + connected + " : Available=" + available);
+            StatusUpdated?.Invoke(Create(DeviceId, connected, available));
         }
     }
 }
