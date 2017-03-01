@@ -6,13 +6,11 @@
 using NLog;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
 using TrakHound.Api.v2.Streams;
 using TrakHound.Api.v2.Streams.Data;
 
@@ -28,49 +26,6 @@ namespace TrakHound.DataClient
         internal static object _lock = new object();
         private int devicesFound = 0;
         private MTConnectSniffer.MTConnectDevice foundDevice;
-
-
-        private static List<ConnectionDefinitionData> _connectionDefinitions = new List<ConnectionDefinitionData>();
-        /// <summary>
-        /// Gets a list of current ConnectionDefinitions that have been read. Read Only.
-        /// </summary>
-        public static ReadOnlyCollection<ConnectionDefinitionData> ConnectionDefinitions { get { return _connectionDefinitions.AsReadOnly(); } }
-
-        private static List<AgentDefinitionData> _agentDefinitions = new List<AgentDefinitionData>();
-        /// <summary>
-        /// Gets a list of current AgentDefinitions that have been read. Read Only.
-        /// </summary>
-        public static ReadOnlyCollection<AgentDefinitionData> AgentDefinitions { get { return _agentDefinitions.AsReadOnly(); } }
-
-        private static List<DeviceDefinitionData> _deviceDefinitions = new List<DeviceDefinitionData>();
-        /// <summary>
-        /// Gets a list of current DeviceDefinitions that have been read. Read Only.
-        /// </summary>
-        public static ReadOnlyCollection<DeviceDefinitionData> DeviceDefinitions { get { return _deviceDefinitions.AsReadOnly(); } }
-
-        private static List<ComponentDefinitionData> _componentDefinitions = new List<ComponentDefinitionData>();
-        /// <summary>
-        /// Gets a list of current ComponentDefinitions that have been read. Read Only.
-        /// </summary>
-        public static ReadOnlyCollection<ComponentDefinitionData> ComponentDefinitions { get { return _componentDefinitions.AsReadOnly(); } }
-
-        private static List<DataItemDefinitionData> _dataItemDefinitions = new List<DataItemDefinitionData>();
-        /// <summary>
-        /// Gets a list of current DataItemDefinitions that have been read. Read Only.
-        /// </summary>
-        public static ReadOnlyCollection<DataItemDefinitionData> DataItemDefinitions { get { return _dataItemDefinitions.AsReadOnly(); } }
-
-        private static List<SampleData> _samples = new List<SampleData>();
-        /// <summary>
-        /// Gets a list of current Samples that have been read. Similar to the MTConnect Current request. Read Only.
-        /// </summary>
-        public static ReadOnlyCollection<SampleData> Samples { get { return _samples.AsReadOnly(); } }
-
-        private static List<StatusData> _statuses = new List<StatusData>();
-        /// <summary>
-        /// Gets a list of Statuses. Read Only.
-        /// </summary>
-        public static ReadOnlyCollection<StatusData> Statuses { get { return _statuses.AsReadOnly(); } }
 
 
         private Configuration _configuration;
@@ -197,13 +152,6 @@ namespace TrakHound.DataClient
 
         private void AgentDefinitionReceived(AgentDefinitionData definition)
         {
-            lock (_lock)
-            {
-                int i = _agentDefinitions.FindIndex(o => o.DeviceId == definition.DeviceId && o.InstanceId == definition.InstanceId);
-                if (i >= 0) _agentDefinitions.RemoveAt(i);
-                _agentDefinitions.Add(definition);
-            }
-
             // Send to DataServers
             foreach (var dataServer in Configuration.DataServers)
             {
@@ -213,13 +161,6 @@ namespace TrakHound.DataClient
 
         private void DeviceDefinitionReceived(DeviceDefinitionData definition)
         {
-            lock (_lock)
-            {
-                int i = _deviceDefinitions.FindIndex(o => o.DeviceId == definition.DeviceId && o.Id == definition.Id);
-                if (i >= 0) _deviceDefinitions.RemoveAt(i);
-                _deviceDefinitions.Add(definition);
-            }
-
             // Send to DataServers
             foreach (var dataServer in Configuration.DataServers)
             {
@@ -229,16 +170,6 @@ namespace TrakHound.DataClient
 
         private void ComponentDefinitionsReceived(List<ComponentDefinitionData> definitions)
         {
-            foreach (var definition in definitions)
-            {
-                lock (_lock)
-                {
-                    int i = _componentDefinitions.FindIndex(o => o.DeviceId == definition.DeviceId && o.Id == definition.Id);
-                    if (i >= 0) _componentDefinitions.RemoveAt(i);
-                    _componentDefinitions.Add(definition);
-                }
-            }
-
             // Send to DataServers
             foreach (var dataServer in Configuration.DataServers)
             {
@@ -248,16 +179,6 @@ namespace TrakHound.DataClient
 
         private void DataDefinitionsReceived(List<DataItemDefinitionData> definitions)
         {
-            foreach (var definition in definitions)
-            {
-                lock (_lock)
-                {
-                    int i = _dataItemDefinitions.FindIndex(o => o.DeviceId == definition.DeviceId && o.Id == definition.Id);
-                    if (i >= 0) _dataItemDefinitions.RemoveAt(i);
-                    _dataItemDefinitions.Add(definition);
-                }
-            }
-
             // Send to DataServers
             foreach (var dataServer in Configuration.DataServers)
             {
@@ -267,17 +188,6 @@ namespace TrakHound.DataClient
    
         private void SamplesReceived(List<SampleData> samples)
         {
-            // Update Current Samples
-            foreach (var sample in samples)
-            {
-                lock (_lock)
-                {
-                    int i = _samples.FindIndex(o => o.DeviceId == sample.DeviceId && o.Id == sample.Id);
-                    if (i >= 0) _samples.RemoveAt(i);
-                    _samples.Add(sample);
-                }
-            }
-
             // Send to DataServers
             foreach (var dataServer in Configuration.DataServers)
             {
@@ -287,13 +197,6 @@ namespace TrakHound.DataClient
 
         private void StatusUpdated(StatusData status)
         {
-            lock (_lock)
-            {
-                int i = _statuses.FindIndex(o => o.DeviceId == status.DeviceId);
-                if (i >= 0) _statuses.RemoveAt(i);
-                _statuses.Add(status);
-            }
-
             // Send to DataServers
             foreach (var dataServer in Configuration.DataServers)
             {

@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.Security;
 using System.Net.Sockets;
+using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using TrakHound.Api.v2.Streams;
@@ -127,65 +128,30 @@ namespace TrakHound.DataClient
 
         private void Worker()
         {
-            lock (_lock)
+            do
             {
-                int delay = 0;
+                var sendList = new List<IStreamData>();
 
-                do
+                lock (_lock)
                 {
-                    var sendList = new List<IStreamData>();
-                    var authFailed = new List<IStreamData>();
+                    // Wait till pulse is sent to signal that new items are in queue
+                    if (queue.Count == 0) Monitor.Wait(_lock);
 
-                    lock (_lock)
-                    {
-                        // Wait till pulse is sent to signal that new items are in queue
-                        Monitor.Wait(_lock);
+                    sendList.AddRange(queue);
+                    queue.Clear();
+                }
 
-                        sendList.AddRange(queue);
-                        queue.Clear();
-                    }
+                SendData(sendList);
 
-                    if (sendList.Count > 0)
-                    {
-                        delay = 0;
-
-                        // Connect to TCP Client
-                        if (ConnectToClient())
-                        {
-                            var successfullySent = new List<IStreamData>();
-                            var failedToSend = new List<IStreamData>();
-
-                            // Send each Item
-                            foreach (var item in sendList)
-                            {
-                                if (!authFailed.Exists(o => o.DeviceId == item.DeviceId))
-                                {
-                                    var responseCode = SendData(item);
-                                    if (responseCode == 200) successfullySent.Add(item);
-                                    else
-                                    {
-                                        if (responseCode == 401) authFailed.Add(item);
-                                        failedToSend.Add(item);
-                                    }
-                                }
-                            }
-
-                            // Raise Events
-                            if (successfullySent.Count > 0) SendSuccessful?.Invoke(successfullySent.Count);
-                            if (failedToSend.Count > 0) SendFailed?.Invoke(failedToSend);
-                        }
-                        else
-                        {
-                            delay = ReconnectionDelay;
-                            SendFailed?.Invoke(sendList);
-                        }
-                    }
-                } while (!stop.WaitOne(delay, true));
-            }
+            } while (!stop.WaitOne(0, true));
         }
 
         private bool ConnectToClient()
         {
+            log.Debug("Stream Client : Connecting to StreamClient @ " + _serverHostname + ":" + _port);
+
+            int delay = 0;
+
             try
             {
                 // Connect to TcpClient
@@ -224,16 +190,118 @@ namespace TrakHound.DataClient
             catch (Exception ex)
             {
                 if (client != null) client.Close();
-                log.Warn("Error Connecting to " + ServerHostname + ":" + _port + ". Retrying in " + ReconnectionDelay + "ms..");
+                log.Warn("Error Connecting to " + ServerHostname + ":" + _port + ". Retrying in " + delay + "ms..");
                 log.Trace(ex);
             }
 
-            if (connected) Disconnected?.Invoke(this, new EventArgs());
+            if (!connected) Disconnected?.Invoke(this, new EventArgs());
 
             return false;
         }
 
-        private int SendData(IStreamData data)
+        private void DisconnectClient()
+        {
+            if (client != null)
+            {
+                log.Debug("Stream Client : Disconnecting Client");
+
+                try
+                {
+                    client.Close();
+                    client = null;
+                }
+                catch (Exception ex)
+                {
+                    log.Trace(ex);
+                }
+            }
+
+            Disconnected?.Invoke(this, new EventArgs());
+        }
+
+        private void SendData(List<IStreamData> sendList)
+        {
+            int attempts = 0;
+            var writeQueue = sendList.ToList();
+
+            do
+            {
+                attempts++;
+
+                // Connect to TCP Client
+                if (ConnectToClient())
+                {
+                    // Write the data to the client's stream
+                    writeQueue = WriteList(writeQueue);
+                }
+                else
+                {
+                    log.Debug("StreamClient : Connection Error : " + sendList.Count + " Items");
+                }
+
+                // Some items weren't sent successfully so try reconnecting to client
+                if (writeQueue.Count > 0) DisconnectClient();
+
+            } while (writeQueue.Count > 0 && attempts < 2);
+
+            // Send Count of Successful Items
+            int successfullySent = sendList.Count - writeQueue.Count;
+            if (successfullySent > 0) SendSuccessful?.Invoke(successfullySent);
+
+            // Check if items were left in queue (failed to send)
+            if (writeQueue.Count > 0)
+            {
+                SendFailed?.Invoke(writeQueue);
+            }
+        }
+
+        /// <summary>
+        /// Write the list of IStreamData to the client connection
+        /// </summary>
+        /// <param name="sendList">List of IStreadData to write</param>
+        /// <returns>List of IStreamData that failed to be written</returns>
+        private List<IStreamData> WriteList(List<IStreamData> sendList)
+        {
+            int failures = 0;
+            var authFailed = new List<IStreamData>();
+            var failed = new List<IStreamData>();
+
+            // Send each Item
+            for (var i = 0; i < sendList.Count; i++)
+            {
+                var item = sendList[i];
+
+                log.Trace("StreamClient : Send Item : " + item.StreamDataType.ToString() + " : " + item.EntryId);
+
+                if (!authFailed.Exists(o => o.DeviceId == item.DeviceId))
+                {
+                    // Attempt to send data and get the Response Code back
+                    var responseCode = WriteData(item);
+                    if (responseCode != 200)
+                    {
+                        // Add to authentication failed list
+                        if (responseCode == 401) authFailed.Add(item);
+                        else
+                        {
+                            // After 2 failed attempts. Break and try to reconnect.
+                            if (failures++ >= 2) break;
+                        }
+
+                        // Remove from queue
+                        failed.Add(item);
+                    }
+                }
+            }
+
+            return failed;
+        }
+
+        /// <summary>
+        /// Write the single IStreamData object to the client stream
+        /// </summary>
+        /// <param name="data">The IStreamData object to write</param>
+        /// <returns>The DataServer's Response Code</returns>
+        private int WriteData(IStreamData data)
         {
             if (stream != null && data != null)
             {
@@ -261,7 +329,7 @@ namespace TrakHound.DataClient
                 }
                 catch (Exception ex)
                 {
-                    log.Warn("Error While Sending Data. Send Failed.");
+                    log.Debug("Error While Sending Data. Send Failed.");
                     log.Trace(ex);
                 }
             }

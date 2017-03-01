@@ -90,8 +90,6 @@ namespace TrakHound.DataClient.DataGroups
                     }
 
                     return match;
-
-                    //return true;
                 }
             }
 

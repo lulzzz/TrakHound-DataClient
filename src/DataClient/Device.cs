@@ -8,7 +8,6 @@ using MTConnect.Clients;
 using NLog;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Timers;
 using System.Xml.Serialization;
 using TrakHound.Api.v2;
@@ -30,11 +29,11 @@ namespace TrakHound.DataClient
 
         private object _lock = new object();
         private string agentUrl;
+
         private Timer statusUpdateTimer;
         private string availabilityId;
         private bool prev_available;
         private bool prev_connected;
-        private bool firstStatusUpdate = true;
 
 
         [XmlIgnore]
@@ -213,6 +212,9 @@ namespace TrakHound.DataClient
         /// </summary>
         public void Start()
         {
+            // Initialize Status
+            UpdateStatus(false, false);
+
             // Start Status Update Timer
             statusUpdateTimer = new Timer();
             statusUpdateTimer.Interval = STATUS_UPDATE_INTERVAL;
@@ -261,7 +263,7 @@ namespace TrakHound.DataClient
             log.Info("Error Connecting to MTConnect Agent @ " + _agentClient.BaseUrl);
             log.Trace(ex);
 
-            UpdateStatus(false);
+            UpdateConnectedStatus(false);
         }
 
         private void _agentClient_Started()
@@ -283,7 +285,7 @@ namespace TrakHound.DataClient
         {
             log.Trace("MTConnect Devices Document Received @ " + DateTime.Now.ToString("o"));
 
-            UpdateStatus(true);
+            UpdateConnectedStatus(true);
 
             if (document.Header != null && document.Devices != null && document.Devices.Count == 1)
             {
@@ -295,6 +297,7 @@ namespace TrakHound.DataClient
 
                 var dataItemDefinitions = new List<DataItemDefinitionData>();
                 var componentDefinitions = new List<ComponentDefinitionData>();
+                var dataFilters = new List<DataFilter>();
 
                 var device = document.Devices[0];
 
@@ -318,6 +321,10 @@ namespace TrakHound.DataClient
                         dataItemDefinitions.Add(Create(DeviceId, agentInstanceId, component.Id, dataItem));
                     }
                 }
+
+                // Get the Availability DataItem
+                var avail = device.DataItems.Find(o => o.Type == "AVAILABILITY");
+                if (avail != null) availabilityId = avail.Id;
 
                 // Send ContainerDefinition Objects
                 if (componentDefinitions.Count > 0) ComponentDefinitionsReceived?.Invoke(componentDefinitions);
@@ -344,7 +351,7 @@ namespace TrakHound.DataClient
         {
             log.Trace("MTConnect Streams Document Received @ " + DateTime.Now.ToString("o"));
 
-            UpdateStatus(true);
+            UpdateConnectedStatus(true);
 
             if (!document.DeviceStreams.IsNullOrEmpty())
             {
@@ -356,6 +363,13 @@ namespace TrakHound.DataClient
                 {
                     samples.Add(Create(DeviceId, document.Header.InstanceId, dataItem));
                 }
+
+                // Get Availability
+                if (!string.IsNullOrEmpty(availabilityId))
+                {
+                    var avail = deviceStream.DataItems.Find(o => o.DataItemId == availabilityId);
+                    if (avail != null) UpdateAvailableStatus(avail.CDATA == "AVAILABLE");
+                }            
 
                 if (samples.Count > 0) SamplesReceived?.Invoke(samples);
             }
@@ -481,38 +495,43 @@ namespace TrakHound.DataClient
             return obj;
         }
 
-        private void UpdateStatus(bool isConnected, bool forceSend = false)
+        private void UpdateAvailableStatus(bool available)
         {
-            var connected = isConnected;
-            var available = false;
-
-            if (connected)
-            {
-                lock (DataClient._lock)
-                {
-                    // Get the Availability DataItem
-                    var availDataItem = DataClient.DataItemDefinitions.ToList().Find(o => o.DeviceId == DeviceId && o.Type == "AVAILABILITY");
-                    if (availDataItem != null)
-                    {
-                        // Get the Availability Sample
-                        var availSample = DataClient.Samples.ToList().Find(o => o.DeviceId == DeviceId && o.Id == availDataItem.Id);
-                        if (availSample != null) available = availSample.CDATA == "AVAILABLE";
-                    }
-                }
-            }
+            bool changed = false;
+            bool connected = false;
 
             lock (_lock)
             {
-                if (forceSend || firstStatusUpdate || available != prev_available || connected != prev_connected)
-                {
-                    log.Info("Status Updated : " + DeviceId + " : Connected=" + connected + " : Available=" + available);
-                    StatusUpdated?.Invoke(Create(DeviceId, connected, available));
-                }
-
+                connected = prev_connected;
+                changed = available != prev_available || connected != prev_connected;
                 prev_available = available;
-                prev_connected = connected;
-                firstStatusUpdate = false;
             }
+
+            if (changed) UpdateStatus(connected, available);
+        }
+
+        private void UpdateConnectedStatus(bool connected)
+        {
+            bool changed = false;
+            bool available = false;
+
+            lock (_lock)
+            {
+                available = prev_available;
+                changed = available != prev_available || connected != prev_connected;
+                prev_connected = connected;
+            }
+
+            if (changed) UpdateStatus(connected, available);
+        }
+
+        private void UpdateStatus(bool connected, bool available)
+        {
+            // Don't send Available if not connected also
+            bool avail = connected && available;
+
+            log.Info("Status Updated : " + DeviceId + " : Connected=" + connected + " : Available=" + avail);
+            StatusUpdated?.Invoke(Create(DeviceId, connected, avail));
         }
     }
 }

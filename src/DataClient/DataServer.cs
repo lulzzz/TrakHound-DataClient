@@ -37,10 +37,16 @@ namespace TrakHound.DataClient
 
         private static Logger log = LogManager.GetCurrentClassLogger();
 
+        private object _lock = new object();
         private ManualResetEvent sendStop;
         private Thread bufferThread;
         private StreamClient streamClient;
         private bool connected;
+
+        private static List<ComponentDefinitionData> components = new List<ComponentDefinitionData>();
+        private static List<DataItemDefinitionData> dataItems = new List<DataItemDefinitionData>();
+        private static List<SampleData> currentSamples = new List<SampleData>();
+
 
         /// <summary>
         /// List of Configured DataGroups for processing data
@@ -170,8 +176,53 @@ namespace TrakHound.DataClient
         {
             var added = new List<IStreamData>();
 
+            // Add Components to stored list
+            foreach (var component in data.OfType<ComponentDefinitionData>().ToList())
+            {
+                lock(_lock)
+                {
+                    int i = components.FindIndex(o => o.DeviceId == component.DeviceId && o.Id == component.Id);
+                    if (i >= 0) components.RemoveAt(i);
+                    components.Add(component);
+                }
+            }
+
+            // Add DataItems to stored list
+            foreach (var dataItem in data.OfType<DataItemDefinitionData>().ToList())
+            {
+                lock (_lock)
+                {
+                    int i = dataItems.FindIndex(o => o.DeviceId == dataItem.DeviceId && o.Id == dataItem.Id);
+                    if (i >= 0) dataItems.RemoveAt(i);
+                    dataItems.Add(dataItem);
+                }
+            }
+
+            // Add Samples to stored list
+            foreach (var sample in data.OfType<SampleData>().ToList())
+            {
+                lock (_lock)
+                {
+                    int i = currentSamples.FindIndex(o => o.DeviceId == sample.DeviceId && o.Id == sample.Id);
+                    if (i >= 0) currentSamples.RemoveAt(i);
+                    currentSamples.Add(sample);
+                }
+            }
+
             // Add Statuses
-            added.AddRange(data.OfType<StatusData>().ToList());
+            var statusData = data.OfType<StatusData>().ToList();
+            if (statusData != null && statusData.Count > 0)
+            {
+                var statuses = new List<StatusData>();
+
+                var deviceIds = statusData.Select(o => o.DeviceId).Distinct();
+                foreach (var deviceId in deviceIds)
+                {
+                    statuses.Add(statusData.FindAll(o => o.DeviceId == deviceId).OrderByDescending(o => o.Timestamp).First());
+                }
+
+                added.AddRange(statuses);
+            }
 
             // Add any Definitions
             added.AddRange(data.OfType<ConnectionDefinitionData>().ToList());
@@ -184,28 +235,17 @@ namespace TrakHound.DataClient
             var samples = data.OfType<SampleData>().ToList();
             if (!samples.IsNullOrEmpty())
             {
-                List<DataItemDefinitionData> dataItemDefinitions = null;
-                List<ComponentDefinitionData> componentDefinitions = null;
-                List<SampleData> currentSamples = null;
-
-                lock (DataClient._lock)
-                {
-                    dataItemDefinitions = DataClient.DataItemDefinitions.ToList();
-                    componentDefinitions = DataClient.ComponentDefinitions.ToList();
-                    currentSamples = DataClient.Samples.ToList();
-                }
-
                 var sampleSendList = new List<SampleData>();
 
                 // Add Archive DataGroups
-                foreach (var sample in FilterSamples(samples, CaptureMode.ARCHIVE, dataItemDefinitions, componentDefinitions, currentSamples))
+                foreach (var sample in FilterSamples(samples, CaptureMode.ARCHIVE))
                 {
                     sampleSendList.Add(sample);
                     log.Trace(sample.StreamDataType.ToString() + " : " + sample.Id + " : " + sample.Timestamp + " : " + sample.CDATA + " : " + sample.Condition);
                 }
 
                 // Add Current DataGroups
-                foreach (var sample in FilterSamples(samples, CaptureMode.CURRENT, dataItemDefinitions, componentDefinitions, currentSamples))
+                foreach (var sample in FilterSamples(samples, CaptureMode.CURRENT))
                 {
                     if (!sampleSendList.Exists(o => o.Id == sample.Id))
                     {
@@ -258,16 +298,19 @@ namespace TrakHound.DataClient
             }
         }
 
-        private List<SampleData> FilterSamples(List<SampleData> samples, CaptureMode captureMode, List<DataItemDefinitionData> dataItemDefinitions, List<ComponentDefinitionData> componentDefinitions, List<SampleData> currentSamples)
+        private List<SampleData> FilterSamples(List<SampleData> samples, CaptureMode captureMode)
         {
             var l = new List<SampleData>();
 
+            var _dataItems = dataItems.ToList();
+            var _components = components.ToList();
+
             foreach (var dataGroup in DataGroups.FindAll(o => o.CaptureMode == captureMode))
             {
-                var filtered = samples.FindAll(o => dataGroup.CheckFilters(o, dataItemDefinitions, componentDefinitions));
+                var filtered = samples.FindAll(o => dataGroup.CheckFilters(o, _dataItems, _components));
                 foreach (var s in filtered)
                 {
-                    var sample = s.Copy(); 
+                    var sample = s.Copy();
 
                     // Set the StreamDataType
                     if (captureMode == CaptureMode.ARCHIVE) sample.SetStreamDataType(StreamDataType.ARCHIVED_SAMPLE);
@@ -287,7 +330,7 @@ namespace TrakHound.DataClient
                         if (group != null)
                         {
                             // Find most current samples for the group's filters
-                            var currentFiltered = currentSamples.FindAll(o => group.CheckFilters(o, dataItemDefinitions, componentDefinitions));
+                            var currentFiltered = currentSamples.FindAll(o => group.CheckFilters(o, _dataItems, _components));
                             foreach (var s1 in currentFiltered)
                             {
                                 var currentSample = s.Copy();
@@ -352,11 +395,16 @@ namespace TrakHound.DataClient
             {
                 // Don't buffer Current Samples or Statuses
                 var bufferItems = streamData.FindAll(o => o.StreamDataType != StreamDataType.CURRENT_SAMPLE && o.StreamDataType != StreamDataType.STATUS);
+                var failedItems = streamData.FindAll(o => o.StreamDataType == StreamDataType.CURRENT_SAMPLE || o.StreamDataType == StreamDataType.STATUS);
                 if (bufferItems.Count > 0)
                 {
                     Buffer.Add(bufferItems);
-                    log.Warn(Hostname + " : " + bufferItems.Count + " Failed to Send. Added to Buffer");
+                    log.Warn(string.Format("{0} : {1} Falied to Send. {2} Added to Buffer.", Hostname, bufferItems.Count + failedItems.Count, bufferItems.Count));
                 }
+                else if (failedItems.Count > 0)
+                {
+                    log.Warn(Hostname + " : " + failedItems.Count + " Failed to Send.");
+                }       
             }
             else
             {
