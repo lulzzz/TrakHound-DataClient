@@ -144,7 +144,7 @@ Configuration is read from the **client.conf** XML file in the following format:
 
   <!--List of configured MTConnect Devices to read from-->
   <Devices>
-    <Device deviceId="0307f8be-5be9-4c14-85a6-8a2a9c9223db" address="http://agent.mtconnect.org" port="80" deviceName="VMC-3Axis"/>
+    <Device deviceId="0307f8be-5be9-4c14-85a6-8a2a9c9223db" address="agent.mtconnect.org" port="80" deviceName="VMC-3Axis"/>
   </Devices>
 
   <!--Configuration for finding MTConnect Devices on the network-->
@@ -203,12 +203,12 @@ List of configured MTConnect Devices to read from.
 
 ```xml
  <Devices>
-    <Device deviceId="0307f8be-5be9-4c14-85a6-8a2a9c9223db" address="http://agent.mtconnect.org" port="80" deviceName="VMC-3Axis"/>
-    <Device deviceId="TY3FNQCZKM3R2V0WWI9H3AUISLW" address="http://192.168.1.198" port="5000" deviceName="Haas_Device"/>
-    <Device deviceId="KGI13AOQSUERHF1XVQSFWLDIBS" address="http://192.168.1.198" port="5001" deviceName="OKUMA.Lathe"/>
-    <Device deviceId="RVJGKEA9ZXUPUIGFVMTQP98L0UY" address="http://192.168.1.198" port="5006" deviceName="OKUMA.Lathe"/>
-    <Device deviceId="UPSFKO6IBDAEOPSFEHLGAIMLCM" address="http://192.168.1.198" port="5003" deviceName="OKUMA.MachiningCenter"/>
-    <Device deviceId="UXJGZKSQS9DIEY7JQ912RS7Q4" address="http://192.168.1.198" port="5002" deviceName="OKUMA.Grinder"/>
+    <Device deviceId="0307f8be-5be9-4c14-85a6-8a2a9c9223db" address="agent.mtconnect.org" port="80" deviceName="VMC-3Axis"/>
+    <Device deviceId="TY3FNQCZKM3R2V0WWI9H3AUISLW" address="192.168.1.198" port="5000" deviceName="Haas_Device"/>
+    <Device deviceId="KGI13AOQSUERHF1XVQSFWLDIBS" address="192.168.1.198" port="5001" deviceName="OKUMA.Lathe"/>
+    <Device deviceId="RVJGKEA9ZXUPUIGFVMTQP98L0UY" address="192.168.1.198" port="5006" deviceName="OKUMA.Lathe"/>
+    <Device deviceId="UPSFKO6IBDAEOPSFEHLGAIMLCM" address="192.168.1.198" port="5003" deviceName="OKUMA.MachiningCenter"/>
+    <Device deviceId="UXJGZKSQS9DIEY7JQ912RS7Q4" address="192.168.1.198" port="5002" deviceName="OKUMA.Grinder"/>
   </Devices>
   ```
 
