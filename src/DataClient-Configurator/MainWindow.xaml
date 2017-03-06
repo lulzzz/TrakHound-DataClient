@@ -11,7 +11,7 @@
         xmlns:local="clr-namespace:TrakHound.DataClient.Configurator"
         xmlns:ui="clr-namespace:TrakHound_UI;assembly=TrakHound-UI"
         mc:Ignorable="d"
-        Title="TrakHound DataClient - Configurator" Height="650" Width="1000" Icon="Resources/dataclient-configurator.ico" ResizeMode="CanResizeWithGrip" WindowStartupLocation="CenterScreen">
+        Title="TrakHound DataClient - Configurator" Height="650" Width="1000" Icon="Resources/dataclient-configurator.ico" ResizeMode="CanResizeWithGrip" WindowStartupLocation="CenterScreen" Closing="Window_Closing">
 
     <Grid>
         <Grid.RowDefinitions>

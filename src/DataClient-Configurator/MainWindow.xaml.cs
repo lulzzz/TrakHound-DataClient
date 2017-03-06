@@ -8,10 +8,10 @@ using System;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Windows;
 using TrakHound.Api.v2.Authentication;
 using TrakHound.MTConnectSniffer;
-using System.Threading;
 
 namespace TrakHound.DataClient.Configurator
 {
@@ -24,6 +24,7 @@ namespace TrakHound.DataClient.Configurator
 
         private Configuration configuration;
         private FileSystemWatcher configurationWatcher;
+        private Sniffer sniffer;
 
 
         public Device SelectedDevice
@@ -363,11 +364,6 @@ namespace TrakHound.DataClient.Configurator
 
             // Get the default Configuration file path
             string configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Configuration.FILENAME);
-            string defaultPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Configuration.DEFAULT_FILENAME);
-            if (!File.Exists(configPath) && File.Exists(defaultPath))
-            {
-                File.Copy(defaultPath, configPath);
-            }
             var config = Configuration.Read(configPath);
             if (config != null)
             {
@@ -398,39 +394,45 @@ namespace TrakHound.DataClient.Configurator
 
         private void StartConfigurationFileWatcher()
         {
-            if (configurationWatcher != null) configurationWatcher.EnableRaisingEvents = false;
-
-            try
+            if (configurationWatcher == null)
             {
                 configurationWatcher = new FileSystemWatcher(AppDomain.CurrentDomain.BaseDirectory, Configuration.FILENAME);
                 configurationWatcher.Changed += ConfigurationFileChanged;
-                configurationWatcher.EnableRaisingEvents = true;
             }
-            catch (Exception ex)
-            {
-                log.Error(ex);
-            }
+            configurationWatcher.EnableRaisingEvents = true;
         }
 
         private void ConfigurationFileChanged(object sender, FileSystemEventArgs e)
         {
-            Dispatcher.BeginInvoke(new Action(() =>
+            if (e.ChangeType == WatcherChangeTypes.Changed)
             {
-                ReadConfigurationFile();
-            }));
+                Dispatcher.Invoke(new Action(() =>
+                {
+                    if (MessageBox.Show("DataClient Configuration File has Changed. Do you want to Reload?", "Configuration File Changed", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                    {
+                        ReadConfigurationFile();
+                    }
+                }));
+            }
         }
 
         private void SaveDevices()
         {
+            if (configurationWatcher != null) configurationWatcher.EnableRaisingEvents = false;
+
             if (Devices != null)
             {
                 configuration.Devices = Devices.ToList();
                 configuration.Save();
             }
+
+            if (configurationWatcher != null) configurationWatcher.EnableRaisingEvents = true;
         }
 
         private void SaveDataServers()
         {
+            if (configurationWatcher != null) configurationWatcher.EnableRaisingEvents = false;
+
             if (DataServerItems != null)
             {
                 configuration.DataServers.Clear();
@@ -441,6 +443,8 @@ namespace TrakHound.DataClient.Configurator
 
                 configuration.Save();
             }
+
+            if (configurationWatcher != null) configurationWatcher.EnableRaisingEvents = true;
         }
 
         private void AddDevice_Clicked(TrakHound_UI.Button bt)
@@ -626,9 +630,11 @@ namespace TrakHound.DataClient.Configurator
         {
             Cursor = System.Windows.Input.Cursors.AppStarting;
 
+            if (sniffer != null) sniffer.Stop();
+
             ThreadPool.QueueUserWorkItem(new WaitCallback((o) =>
             {
-                var sniffer = new Sniffer();
+                sniffer = new Sniffer();
                 sniffer.DeviceFound += Sniffer_DeviceFound;
                 sniffer.RequestsCompleted += Sniffer_RequestsCompleted;
                 sniffer.Start();
@@ -684,6 +690,12 @@ namespace TrakHound.DataClient.Configurator
         private void Exit_Click(object sender, RoutedEventArgs e)
         {
             Close();
+        }
+
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            if (sniffer != null) sniffer.Stop();
+            if (configurationWatcher != null) configurationWatcher.EnableRaisingEvents = false;
         }
     }
 }
