@@ -6,10 +6,9 @@
 using NLog;
 using System;
 using System.Security.Permissions;
-using System.Threading;
+using System.ServiceProcess;
 using System.Timers;
 using System.Windows.Forms;
-using System.ServiceProcess;
 
 namespace TrakHound.DataClient.Menu
 {
@@ -20,7 +19,6 @@ namespace TrakHound.DataClient.Menu
 
         private static Logger log = LogManager.GetCurrentClassLogger();
         private static SystemTrayMenu menu;
-        private static ManualResetEvent stop;
         private static System.Timers.Timer serviceStatusTimer;
         private static ServiceControllerStatus previousStatus;
 
@@ -82,7 +80,6 @@ namespace TrakHound.DataClient.Menu
 
         public static void Exit()
         {
-            if (stop != null) stop.Set();
             if (menu != null) menu.Exit();
             if (serviceStatusTimer != null) serviceStatusTimer.Stop();
             Application.Exit();

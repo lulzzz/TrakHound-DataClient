@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace TrakHound.DataClient.Menu.Properties {
+namespace TrakHound.DataClient.Configurator.Properties {
     using System;
     
     
@@ -39,7 +39,7 @@ namespace TrakHound.DataClient.Menu.Properties {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("TrakHound.DataClient.Menu.Properties.Resources", typeof(Resources).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("TrakHound.DataClient.Configurator.Properties.Resources", typeof(Resources).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -61,21 +61,21 @@ namespace TrakHound.DataClient.Menu.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Icon dataclient {
+        internal static System.Drawing.Bitmap About_01 {
             get {
-                object obj = ResourceManager.GetObject("dataclient", resourceCulture);
-                return ((System.Drawing.Icon)(obj));
+                object obj = ResourceManager.GetObject("About_01", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap dataclient_configurator_icon_30px {
+        internal static System.Drawing.Bitmap Add_01 {
             get {
-                object obj = ResourceManager.GetObject("dataclient_configurator_icon_30px", resourceCulture);
+                object obj = ResourceManager.GetObject("Add_01", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -83,9 +83,9 @@ namespace TrakHound.DataClient.Menu.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
         /// </summary>
-        internal static System.Drawing.Icon dataclient_menu {
+        internal static System.Drawing.Icon dataclient_configurator {
             get {
-                object obj = ResourceManager.GetObject("dataclient_menu", resourceCulture);
+                object obj = ResourceManager.GetObject("dataclient_configurator", resourceCulture);
                 return ((System.Drawing.Icon)(obj));
             }
         }
@@ -93,9 +93,49 @@ namespace TrakHound.DataClient.Menu.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap UAC_01 {
+        internal static System.Drawing.Bitmap dataclient_configurator_icon_50px {
             get {
-                object obj = ResourceManager.GetObject("UAC_01", resourceCulture);
+                object obj = ResourceManager.GetObject("dataclient_configurator_icon_50px", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Disk_01 {
+            get {
+                object obj = ResourceManager.GetObject("Disk_01", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Lock_01 {
+            get {
+                object obj = ResourceManager.GetObject("Lock_01", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap trakhound_logo_30px {
+            get {
+                object obj = ResourceManager.GetObject("trakhound_logo_30px", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap X_01 {
+            get {
+                object obj = ResourceManager.GetObject("X_01", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

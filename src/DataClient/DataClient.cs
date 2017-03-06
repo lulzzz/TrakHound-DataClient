@@ -213,7 +213,7 @@ namespace TrakHound.DataClient
             log.Info("---------------------------");
         }
 
-        private static string GenerateDeviceId(MTConnectSniffer.MTConnectDevice device)
+        public static string GenerateDeviceId(MTConnectSniffer.MTConnectDevice device)
         {
             // Create Identifier input
             string s = string.Format("{0}|{1}|{2}", device.DeviceName, device.Port, device.MacAddress);

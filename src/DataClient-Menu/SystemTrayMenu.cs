@@ -31,6 +31,8 @@ namespace TrakHound.DataClient.Menu
             menu.Items.Add(new ToolStripMenuItem("Start", Properties.Resources.UAC_01, Start));
             menu.Items.Add(new ToolStripMenuItem("Stop", Properties.Resources.UAC_01, Stop));
             menu.Items.Add(new ToolStripSeparator());
+            menu.Items.Add(new ToolStripMenuItem("Configuration..", Properties.Resources.dataclient_configurator_icon_30px, OpenConfigurator));
+            menu.Items.Add(new ToolStripSeparator());
             menu.Items.Add(new ToolStripMenuItem("Open Configuration File", null, OpenConfigurationFile));
             menu.Items.Add(new ToolStripMenuItem("Open Log File", null, OpenLogFile));
             menu.Items.Add(new ToolStripSeparator());
@@ -74,6 +76,21 @@ namespace TrakHound.DataClient.Menu
                 if (Environment.OSVersion.Version.Major >= 6) info.Verb = "runas";
 
                 Process.Start(info);
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+            }
+        }
+
+        private void OpenConfigurator(object sender, EventArgs e)
+        {
+            try
+            {
+                string appDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                string exePath = Path.Combine(appDir, "TrakHound-DataClient-Configurator.exe");
+
+                if (File.Exists(exePath)) Process.Start(exePath);
             }
             catch (Exception ex)
             {

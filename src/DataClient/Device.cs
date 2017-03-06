@@ -136,7 +136,11 @@ namespace TrakHound.DataClient
         [XmlAttribute("interval")]
         public int Interval
         {
-            get { return _interval; }
+            get
+            {
+                if (_interval < 0) _interval = 500;
+                return _interval;
+            }
             set
             {
                 if (_interval >= 0) throw new InvalidOperationException("Cannot set value. Interval is ReadOnly!");
@@ -198,12 +202,12 @@ namespace TrakHound.DataClient
                 AgentConnection.PhysicalAddress = connection.PhysicalAddress;
                 AgentConnection.DeviceId = deviceId;
 
-                DeviceId = deviceId;
-                Address = connection.Address;
-                PhysicalAddress = connection.PhysicalAddress;
-                Port = connection.Port;
-                DeviceName = deviceName;
-                Interval = interval;
+                _deviceId = deviceId;
+                _address = connection.Address;
+                _physicalAddress = connection.PhysicalAddress;
+                _port = connection.Port;
+                _deviceName = deviceName;
+                _interval = interval;
             }
         }
 
@@ -237,25 +241,37 @@ namespace TrakHound.DataClient
 
         private void StartAgentClient()
         {
-            // Create the MTConnect Agent Base URL
-            agentUrl = string.Format("http://{0}:{1}", Address, Port);
+            if (!string.IsNullOrEmpty(Address))
+            {
+                // Normalize Properties
+                _address = _address.Replace("http://", "");
+                if (_port < 0) _port = 5000;
+                if (_interval < 0) _interval = 500;
 
-            // Create a new MTConnectClient using the baseUrl
-            _agentClient = new MTConnectClient(agentUrl, DeviceName);
-            _agentClient.Interval = Interval;
+                // Create the MTConnect Agent Base URL
+                agentUrl = string.Format("http://{0}:{1}", _address, _port);
 
-            // Subscribe to the Event handlers to receive status events
-            _agentClient.Started += _agentClient_Started;
-            _agentClient.Stopped += _agentClient_Stopped;
+                // Create a new MTConnectClient using the baseUrl
+                _agentClient = new MTConnectClient(agentUrl, _deviceName);
+                _agentClient.Interval = _interval;
 
-            // Subscribe to the Event handlers to receive the MTConnect documents
-            _agentClient.ProbeReceived += DevicesSuccessful;
-            _agentClient.CurrentReceived += StreamsSuccessful;
-            _agentClient.SampleReceived += StreamsSuccessful;
-            _agentClient.ConnectionError += _agentClient_ConnectionError;
+                // Subscribe to the Event handlers to receive status events
+                _agentClient.Started += _agentClient_Started;
+                _agentClient.Stopped += _agentClient_Stopped;
 
-            // Start the MTConnectClient
-            _agentClient.Start();
+                // Subscribe to the Event handlers to receive the MTConnect documents
+                _agentClient.ProbeReceived += DevicesSuccessful;
+                _agentClient.CurrentReceived += StreamsSuccessful;
+                _agentClient.SampleReceived += StreamsSuccessful;
+                _agentClient.ConnectionError += _agentClient_ConnectionError;
+
+                // Start the MTConnectClient
+                _agentClient.Start();
+            }
+            else
+            {
+                log.Warn("MTConnect Address Invalid : " + _deviceId + " : " + _address);
+            }
         }
 
         private void _agentClient_ConnectionError(Exception ex)
@@ -268,12 +284,12 @@ namespace TrakHound.DataClient
 
         private void _agentClient_Started()
         {
-            log.Info("MTConnect Client Started : " + agentUrl + "/" + DeviceName);
+            log.Info("MTConnect Client Started : " + agentUrl + "/" + _deviceName);
         }
 
         private void _agentClient_Stopped()
         {
-            log.Info("MTConnect Client Stopped : " + agentUrl + "/" + DeviceName);
+            log.Info("MTConnect Client Stopped : " + agentUrl + "/" + _deviceName);
         }
 
         private void StatusUpdateTimer_Elapsed(object sender, ElapsedEventArgs e)
@@ -293,7 +309,7 @@ namespace TrakHound.DataClient
                 DateTime timestamp = document.Header.CreationTime;
 
                 // Send Agent Definition
-                AgentDefinitionsReceived?.Invoke(Create(DeviceId, document.Header));
+                AgentDefinitionsReceived?.Invoke(Create(_deviceId, document.Header));
 
                 var dataItemDefinitions = new List<DataItemDefinitionData>();
                 var componentDefinitions = new List<ComponentDefinitionData>();
@@ -302,23 +318,23 @@ namespace TrakHound.DataClient
                 var device = document.Devices[0];
 
                 // Send Device Definition
-                DeviceDefinitionsReceived?.Invoke(Create(DeviceId, agentInstanceId, device));
+                DeviceDefinitionsReceived?.Invoke(Create(_deviceId, agentInstanceId, device));
 
                 // Add DataItems
                 foreach (var item in device.DataItems)
                 {
-                    dataItemDefinitions.Add(Create(DeviceId, agentInstanceId, device.Id, item));
+                    dataItemDefinitions.Add(Create(_deviceId, agentInstanceId, device.Id, item));
                 }
 
                 // Add Component Definitions
-                componentDefinitions.AddRange(GetComponents(DeviceId, agentInstanceId, device.Id, device.Components));
+                componentDefinitions.AddRange(GetComponents(_deviceId, agentInstanceId, device.Id, device.Components));
 
                 // Add Component DataItems
                 foreach (var component in device.GetComponents())
                 {
                     foreach (var dataItem in component.DataItems)
                     {
-                        dataItemDefinitions.Add(Create(DeviceId, agentInstanceId, component.Id, dataItem));
+                        dataItemDefinitions.Add(Create(_deviceId, agentInstanceId, component.Id, dataItem));
                     }
                 }
 
@@ -361,7 +377,7 @@ namespace TrakHound.DataClient
 
                 foreach (var dataItem in deviceStream.DataItems)
                 {
-                    samples.Add(Create(DeviceId, document.Header.InstanceId, dataItem));
+                    samples.Add(Create(_deviceId, document.Header.InstanceId, dataItem));
                 }
 
                 // Get Availability
@@ -527,8 +543,8 @@ namespace TrakHound.DataClient
 
         private void UpdateStatus(bool connected, bool available)
         {
-            log.Info("Status Updated : " + DeviceId + " : Connected=" + connected + " : Available=" + available);
-            StatusUpdated?.Invoke(Create(DeviceId, connected, available));
+            log.Info("Status Updated : " + _deviceId + " : Connected=" + connected + " : Available=" + available);
+            StatusUpdated?.Invoke(Create(_deviceId, connected, available));
         }
     }
 }

@@ -7,6 +7,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrakHound-DataClient", "Dat
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrakHound-DataClient-Menu", "DataClient-Menu\TrakHound-DataClient-Menu.csproj", "{A26AE1CA-C45B-4F56-B0E0-A6361F0AE4C7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrakHound-UI", "..\..\TrakHound-UI\TrakHound-UI.csproj", "{B4C046FF-4A7D-4059-AAF8-713059CCF0F3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrakHound-DataClient-Configurator", "DataClient-Configurator\TrakHound-DataClient-Configurator.csproj", "{74CB5265-AF54-41FF-9096-EC0A41F880B2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +25,14 @@ Global
 		{A26AE1CA-C45B-4F56-B0E0-A6361F0AE4C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A26AE1CA-C45B-4F56-B0E0-A6361F0AE4C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A26AE1CA-C45B-4F56-B0E0-A6361F0AE4C7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B4C046FF-4A7D-4059-AAF8-713059CCF0F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B4C046FF-4A7D-4059-AAF8-713059CCF0F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B4C046FF-4A7D-4059-AAF8-713059CCF0F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B4C046FF-4A7D-4059-AAF8-713059CCF0F3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{74CB5265-AF54-41FF-9096-EC0A41F880B2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{74CB5265-AF54-41FF-9096-EC0A41F880B2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{74CB5265-AF54-41FF-9096-EC0A41F880B2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{74CB5265-AF54-41FF-9096-EC0A41F880B2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

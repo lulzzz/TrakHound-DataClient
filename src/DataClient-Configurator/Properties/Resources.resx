@@ -118,16 +118,28 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
-  <data name="dataclient" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\dataclient.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="Add_01" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Add_01.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="UAC_01" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\UAC_01.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="Disk_01" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Disk_01.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="dataclient_configurator_icon_30px" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\dataclient-configurator-icon-30px.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="X_01" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\X_01.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="dataclient_menu" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\dataclient-menu.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="Lock_01" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Lock_01.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="trakhound_logo_30px" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\trakhound_logo_30px.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="dataclient_configurator" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\dataclient-configurator.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="About_01" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\About_01.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="dataclient_configurator_icon_50px" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\dataclient-configurator-icon-50px.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
 </root>
