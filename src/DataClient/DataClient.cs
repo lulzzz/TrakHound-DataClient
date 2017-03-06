@@ -96,20 +96,22 @@ namespace TrakHound.DataClient
 
         private void DeviceFinder_SearchCompleted(long milliseconds)
         {
+            if (devicesFound > 0)
+            {
+                Configuration.Save();
+            }
+
             devicesFound = 0;
             foundDevice = null;
-
-            Configuration.Save();
         }
 
         private void DeviceFinder_DeviceFound(MTConnectSniffer.MTConnectDevice device)
         {
             foundDevice = device;
-            devicesFound++;
-            AddDevice(device);
+            if (AddDevice(device)) devicesFound++;        
         }
 
-        private void AddDevice(MTConnectSniffer.MTConnectDevice device)
+        private bool AddDevice(MTConnectSniffer.MTConnectDevice device)
         {
             // Generate the Device ID Hash
             string deviceId = GenerateDeviceId(device);
@@ -128,7 +130,11 @@ namespace TrakHound.DataClient
                 StartDevice(d);
 
                 log.Info("New Device Added : " + deviceId + " : " + device.DeviceName + " : " + device.IpAddress + " : " + device.Port);
+
+                return true;
             }
+
+            return false;
         }
 
         private void StartDevice(Device device)

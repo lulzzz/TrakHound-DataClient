@@ -46,9 +46,9 @@
       <HintPath>..\packages\MTConnect.NET.2.4.1.8078\lib\net40\MTConnect-NET.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="MTConnect-Sniffer, Version=1.2.0.28737, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\MTConnect-Sniffer.1.2.0.28737\lib\net40\MTConnect-Sniffer.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="MTConnect-Sniffer, Version=1.2.1.26185, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\MTConnect-Sniffer\src\bin\Release\MTConnect-Sniffer.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net40\Newtonsoft.Json.dll</HintPath>
