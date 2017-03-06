@@ -20,7 +20,8 @@ namespace TrakHound.DataClient.Menu
         private static Logger log = LogManager.GetCurrentClassLogger();
         private static SystemTrayMenu menu;
         private static System.Timers.Timer serviceStatusTimer;
-        private static ServiceControllerStatus previousStatus;
+
+        internal static ServiceControllerStatus ServiceStatus;
 
 
         /// <summary>
@@ -58,7 +59,7 @@ namespace TrakHound.DataClient.Menu
             {
                 var status = sc.Status;
 
-                if (status != previousStatus)
+                if (status != ServiceStatus)
                 {
                     // Update Menu Status Label
                     SystemTrayMenu.SetHeader(status.ToString());
@@ -74,7 +75,7 @@ namespace TrakHound.DataClient.Menu
                     }
                 }
 
-                previousStatus = status;
+                ServiceStatus = status;
             }
         }
 
