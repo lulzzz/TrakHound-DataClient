@@ -22,7 +22,8 @@ namespace TrakHound.DataClient.Configurator
     {
         private static Logger log = LogManager.GetCurrentClassLogger();
 
-        private Configuration _configuration;
+        private Configuration configuration;
+        private FileSystemWatcher configurationWatcher;
 
 
         public Device SelectedDevice
@@ -352,6 +353,9 @@ namespace TrakHound.DataClient.Configurator
 
         private void ReadConfigurationFile()
         {
+            // Disable File Watcher
+            if (configurationWatcher != null) configurationWatcher.EnableRaisingEvents = false;
+
             Devices.Clear();
             DataServerItems.Clear();
             SelectedDevice = null;
@@ -367,7 +371,7 @@ namespace TrakHound.DataClient.Configurator
             var config = Configuration.Read(configPath);
             if (config != null)
             {
-                _configuration = config;
+                configuration = config;
 
                 if (config.Devices != null)
                 {
@@ -388,14 +392,40 @@ namespace TrakHound.DataClient.Configurator
                     if (DataServerItems != null && DataServerItems.Count > 0) SelectedDataServer = DataServerItems[0];
                 }
             }
+
+            StartConfigurationFileWatcher();
+        }
+
+        private void StartConfigurationFileWatcher()
+        {
+            if (configurationWatcher != null) configurationWatcher.EnableRaisingEvents = false;
+
+            try
+            {
+                configurationWatcher = new FileSystemWatcher(AppDomain.CurrentDomain.BaseDirectory, Configuration.FILENAME);
+                configurationWatcher.Changed += ConfigurationFileChanged;
+                configurationWatcher.EnableRaisingEvents = true;
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+            }
+        }
+
+        private void ConfigurationFileChanged(object sender, FileSystemEventArgs e)
+        {
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                ReadConfigurationFile();
+            }));
         }
 
         private void SaveDevices()
         {
             if (Devices != null)
             {
-                _configuration.Devices = Devices.ToList();
-                _configuration.Save();
+                configuration.Devices = Devices.ToList();
+                configuration.Save();
             }
         }
 
@@ -403,13 +433,13 @@ namespace TrakHound.DataClient.Configurator
         {
             if (DataServerItems != null)
             {
-                _configuration.DataServers.Clear();
+                configuration.DataServers.Clear();
                 foreach (var item in DataServerItems)
                 {
-                    _configuration.DataServers.Add(item.DataServer);
+                    configuration.DataServers.Add(item.DataServer);
                 }
 
-                _configuration.Save();
+                configuration.Save();
             }
         }
 
@@ -608,13 +638,13 @@ namespace TrakHound.DataClient.Configurator
 
         private void Sniffer_DeviceFound(MTConnectDevice device)
         {
-            if (_configuration.Devices != null)
+            if (configuration.Devices != null)
             {
                 // Generate the Device ID Hash
                 string deviceId = DataClient.GenerateDeviceId(device);
 
                 // Check to make sure the Device is not already added
-                if (!_configuration.Devices.Exists(o => o.DeviceId == deviceId))
+                if (!configuration.Devices.Exists(o => o.DeviceId == deviceId))
                 {
                     var conn = new Api.v2.Data.Connection();
                     conn.Address = device.IpAddress.ToString();
