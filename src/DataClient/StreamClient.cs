@@ -275,7 +275,14 @@ namespace TrakHound.DataClient
                 {
                     // Attempt to send data and get the Response Code back
                     var responseCode = WriteData(item);
-                    if (responseCode == 401) authFailed.Add(item);
+                    if (responseCode == 401)
+                    {
+                        log.Info("Authentication Failed : ApiKey=" + item.ApiKey + " : DeviceId=" + item.DeviceId);
+                        authFailed.Add(item);
+
+                        // Add to failed
+                        failed.Add(item);
+                    }
                     else if (responseCode != 200)
                     {
                         // Add to failed
@@ -284,6 +291,11 @@ namespace TrakHound.DataClient
                         // After 2 failed attempts. Break and try to reconnect.
                         if (failures++ >= 2) break;
                     }
+                }
+                else
+                {
+                    // Add to failed
+                    failed.Add(item);
                 }
             }
 
