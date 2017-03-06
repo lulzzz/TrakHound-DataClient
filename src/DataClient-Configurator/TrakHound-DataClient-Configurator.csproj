@@ -82,6 +82,10 @@
       <HintPath>..\packages\TrakHound-Api.1.6.0.15110\lib\net40\TrakHound-Api.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="TrakHound-UI, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\TrakHound-UI.dll</HintPath>
+    </Reference>
     <Reference Include="WindowsBase" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
@@ -148,10 +152,6 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\TrakHound-UI\TrakHound-UI.csproj">
-      <Project>{b4c046ff-4a7d-4059-aaf8-713059ccf0f3}</Project>
-      <Name>TrakHound-UI</Name>
-    </ProjectReference>
     <ProjectReference Include="..\DataClient\TrakHound-DataClient.csproj">
       <Project>{a08323e8-aee6-4e77-a014-567def401d4b}</Project>
       <Name>TrakHound-DataClient</Name>
