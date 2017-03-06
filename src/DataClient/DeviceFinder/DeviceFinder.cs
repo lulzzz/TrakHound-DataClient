@@ -68,6 +68,9 @@ namespace TrakHound.DataClient.DeviceFinder
             var ips = GetAddressRange();
             if (ips != null) sniffer.AddressRange = ips;
 
+            if (sniffer.PortRange != null) log.Info(string.Format("Searching for Devices : Ports : {0} to {1}", sniffer.PortRange[0], sniffer.PortRange[sniffer.PortRange.Length - 1]));
+            if (sniffer.AddressRange != null) log.Info(string.Format("Searching for Devices : Addresses : {0} to {1}", sniffer.AddressRange[0], sniffer.AddressRange[sniffer.AddressRange.Length - 1]));
+
             stop = new ManualResetEvent(false);
 
             thread = new Thread(new ThreadStart(Worker));
