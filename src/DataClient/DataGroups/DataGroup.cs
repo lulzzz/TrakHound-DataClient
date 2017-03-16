@@ -18,6 +18,12 @@ namespace TrakHound.DataClient.DataGroups
     public class DataGroup
     {
         /// <summary>
+        /// Unique Identifier created at runtime
+        /// </summary>
+        [XmlIgnore]
+        public string Id { get; set; }
+
+        /// <summary>
         /// The Name of the DataGroup
         /// </summary>
         [XmlAttribute("name")]
@@ -50,51 +56,54 @@ namespace TrakHound.DataClient.DataGroups
         [XmlArrayItem("DataGroup")]
         public List<string> IncludedDataGroups { get; set; }
 
-        /// <summary>
-        /// Check a Sample based on the DataGroup's filters
-        /// </summary>
-        /// <param name="sample">The Sample to check</param>
-        /// <returns>A boolean indicating whether or not the Sample passes the filters</returns>
-        public bool CheckFilters(SampleData sample, List<DataItemDefinitionData> dataItemDefinitions, List<ComponentDefinitionData> componentDefinitions)
+        public DataGroup()
         {
-            if (sample != null && dataItemDefinitions != null && componentDefinitions != null)
+            Id = System.Guid.NewGuid().ToString();
+        }
+
+        /// <summary>
+        /// Check a List of DataItemDefintionsData objects based on the DataGroup's filters
+        /// </summary>
+        /// <returns>A list of DataItemDefinitionData objects that are allowed through the DataGroup</returns>
+        public List<DataItemDefinitionData> CheckFilters(List<DataItemDefinitionData> dataItemDefinitions, List<ComponentDefinitionData> componentDefinitions)
+        {
+            var allowed = new List<DataItemDefinitionData>();
+
+            // Get the Components as a list of ComponentDefinition objects
+            var components = componentDefinitions.ToList<ComponentDefinition>();
+
+            foreach (var dataItem in dataItemDefinitions)
             {
-                string deviceId = sample.DeviceId;
+                bool match = Allowed == null || Allowed.Count == 0;
 
-                var dataDefinition = dataItemDefinitions.Find(o => o.DeviceId == deviceId && o.Id == sample.Id);
-                if (dataDefinition != null)
+                // Search Allowed Filters
+                foreach (var filter in Allowed)
                 {
-                    bool match = Allowed == null || Allowed.Count == 0;
+                    var dataFilter = new DataFilter(filter, dataItem, components);
+                    match = dataFilter.IsMatch();
+                    if (match) break;
+                }
 
-                    // Search Allowed Filters
-                    foreach (var filter in Allowed)
+                if (match)
+                {
+                    // Search Denied Filters
+                    foreach (var filter in Denied)
                     {
-                        var dataFilter = new DataFilter(filter, dataDefinition, componentDefinitions.ToList<ComponentDefinition>());
-                        match = dataFilter.IsMatch();
-                        if (match) break;
-                    }
-
-                    if (match)
-                    {
-                        // Search Denied Filters
-                        foreach (var filter in Denied)
+                        var dataFilter = new DataFilter(filter, dataItem, components);
+                        bool denied = dataFilter.IsMatch();
+                        if (denied)
                         {
-                            var dataFilter = new DataFilter(filter, dataDefinition, componentDefinitions.ToList<ComponentDefinition>());
-                            bool denied = dataFilter.IsMatch();
-                            if (denied)
-                            {
-                                match = false;
-                                break;
-                            }
+                            match = false;
+                            break;
                         }
                     }
-
-                    return match;
                 }
+
+                if (match) allowed.Add(dataItem);
             }
 
-            return false;
+            return allowed;
         }
-        
+
     }
 }

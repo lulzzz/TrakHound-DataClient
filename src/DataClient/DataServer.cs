@@ -36,16 +36,35 @@ namespace TrakHound.DataClient
         private const int MAX_BUFFER_READ_COUNT = 5000;
 
         private static Logger log = LogManager.GetCurrentClassLogger();
+        private static List<ComponentDefinitionData> storedComponents = new List<ComponentDefinitionData>();
+        private static List<DataItemDefinitionData> storedDataItems = new List<DataItemDefinitionData>();
+        private static List<SampleData> storedCurrentSamples = new List<SampleData>();
 
+        private class FilteredDataItem
+        {
+            private string _dataGroupId;
+            public string DataGroupId { get { return _dataGroupId; } }
+
+            private string _deviceId;
+            public string DeviceId { get { return _deviceId; } }
+
+            private string _dataItemId;
+            public string DataItemId { get { return _dataItemId; } }
+
+            public FilteredDataItem(string dataGroupId, string deviceId, string dataItemId)
+            {
+                _dataGroupId = dataGroupId;
+                _deviceId = deviceId;
+                _dataItemId = dataItemId;
+            }
+        }
+
+        private List<FilteredDataItem> filteredDataItems = new List<FilteredDataItem>();
         private object _lock = new object();
         private ManualResetEvent sendStop;
         private Thread bufferThread;
         private StreamClient streamClient;
-        private bool connected;
-
-        private static List<ComponentDefinitionData> components = new List<ComponentDefinitionData>();
-        private static List<DataItemDefinitionData> dataItems = new List<DataItemDefinitionData>();
-        private static List<SampleData> currentSamples = new List<SampleData>();
+        private bool connected;     
 
 
         /// <summary>
@@ -174,102 +193,24 @@ namespace TrakHound.DataClient
         /// </summary>
         public void Add(List<IStreamData> data)
         {
-            var added = new List<IStreamData>();
+            // Update the static stored lists
+            UpdateStoredLists(data);
 
-            // Add Components to stored list
-            foreach (var component in data.OfType<ComponentDefinitionData>().ToList())
-            {
-                lock(_lock)
-                {
-                    int i = components.FindIndex(o => o.DeviceId == component.DeviceId && o.Id == component.Id);
-                    if (i >= 0) components.RemoveAt(i);
-                    components.Add(component);
-                }
-            }
-
-            // Add DataItems to stored list
-            foreach (var dataItem in data.OfType<DataItemDefinitionData>().ToList())
-            {
-                lock (_lock)
-                {
-                    int i = dataItems.FindIndex(o => o.DeviceId == dataItem.DeviceId && o.Id == dataItem.Id);
-                    if (i >= 0) dataItems.RemoveAt(i);
-                    dataItems.Add(dataItem);
-                }
-            }
-
-            // Add Samples to stored list
-            foreach (var sample in data.OfType<SampleData>().ToList())
-            {
-                lock (_lock)
-                {
-                    int i = currentSamples.FindIndex(o => o.DeviceId == sample.DeviceId && o.Id == sample.Id);
-                    if (i >= 0) currentSamples.RemoveAt(i);
-                    currentSamples.Add(sample);
-                }
-            }
-
-            // Add Statuses
-            var statusData = data.OfType<StatusData>().ToList();
-            if (statusData != null && statusData.Count > 0)
-            {
-                var statuses = new List<StatusData>();
-
-                var deviceIds = statusData.Select(o => o.DeviceId).Distinct();
-                foreach (var deviceId in deviceIds)
-                {
-                    statuses.Add(statusData.FindAll(o => o.DeviceId == deviceId).OrderByDescending(o => o.Timestamp).First());
-                }
-
-                added.AddRange(statuses);
-            }
-
-            // Add any Definitions
-            added.AddRange(data.OfType<ConnectionDefinitionData>().ToList());
-            added.AddRange(data.OfType<AgentDefinitionData>().ToList());
-            added.AddRange(data.OfType<ComponentDefinitionData>().ToList());
-            added.AddRange(data.OfType<DataItemDefinitionData>().ToList());
-            added.AddRange(data.OfType<DeviceDefinitionData>().ToList());
-
-            // Add Samples using the configured Filters
-            var samples = data.OfType<SampleData>().ToList();
-            if (!samples.IsNullOrEmpty())
-            {
-                var sampleSendList = new List<SampleData>();
-
-                // Add Archive DataGroups
-                foreach (var sample in FilterSamples(samples, CaptureMode.ARCHIVE))
-                {
-                    sampleSendList.Add(sample);
-                    log.Trace(sample.StreamDataType.ToString() + " : " + sample.Id + " : " + sample.Timestamp + " : " + sample.CDATA + " : " + sample.Condition);
-                }
-
-                // Add Current DataGroups
-                foreach (var sample in FilterSamples(samples, CaptureMode.CURRENT))
-                {
-                    if (!sampleSendList.Exists(o => o.Id == sample.Id))
-                    {
-                        sampleSendList.Add(sample);
-                        log.Trace("CURRENT : " + sample.Id + " : " + sample.Timestamp + " : " + sample.CDATA + " : " + sample.Condition);
-                    }
-                }
-
-                added.AddRange(sampleSendList);
-            }
-
-            if (added.Count > 0)
+            // Create list of data and send it to DataServer
+            var filtered = FilterStreamData(data);           
+            if (filtered.Count > 0)
             {
                 var sendList = new List<IStreamData>();
 
                 if (Buffer != null)
                 {
                     // Get the max amount of items to send at one time
-                    sendList.AddRange(added.Take(MAX_SEND_COUNT).ToList());
+                    sendList.AddRange(filtered.Take(MAX_SEND_COUNT).ToList());
 
                     // Add the rest to the Buffer
-                    if (added.Count > MAX_SEND_COUNT)
+                    if (filtered.Count > MAX_SEND_COUNT)
                     {
-                        var bufferList = added.GetRange(MAX_SEND_COUNT, added.Count - MAX_SEND_COUNT);
+                        var bufferList = filtered.GetRange(MAX_SEND_COUNT, filtered.Count - MAX_SEND_COUNT);
                         bufferList = bufferList.FindAll(o => o.StreamDataType != StreamDataType.CURRENT_SAMPLE);
                         if (bufferList.Count > 0)
                         {
@@ -280,10 +221,10 @@ namespace TrakHound.DataClient
                 }
                 else
                 {
-                    sendList.AddRange(added);
-                    if (added.Count > MAX_SEND_COUNT)
+                    sendList.AddRange(filtered);
+                    if (filtered.Count > MAX_SEND_COUNT)
                     {
-                        log.Warn(Hostname + " : " + (added.Count - MAX_SEND_COUNT) + " Added to Buffer. Exceeded Max Send Count. Configure a Buffer to not lose data!");
+                        log.Warn(Hostname + " : " + (filtered.Count - MAX_SEND_COUNT) + " Added to Buffer. Exceeded Max Send Count. Configure a Buffer to not lose data!");
                     }
                 }
 
@@ -298,51 +239,130 @@ namespace TrakHound.DataClient
             }
         }
 
-        private List<SampleData> FilterSamples(List<SampleData> samples, CaptureMode captureMode)
+        private List<IStreamData> FilterStreamData(List<IStreamData> data)
         {
-            var l = new List<SampleData>();
+            var filtered = new List<IStreamData>();
 
-            var _dataItems = dataItems.ToList();
-            var _components = components.ToList();
-
-            foreach (var dataGroup in DataGroups.FindAll(o => o.CaptureMode == captureMode))
+            if (data != null && data.Count > 0)
             {
-                var filtered = samples.FindAll(o => dataGroup.CheckFilters(o, _dataItems, _components));
-                foreach (var s in filtered)
+                // Add Statuses
+                var statusData = data.OfType<StatusData>().ToList();
+                if (!statusData.IsNullOrEmpty())
                 {
-                    var sample = s.Copy();
+                    var statuses = new List<StatusData>();
 
-                    // Set the StreamDataType
-                    if (captureMode == CaptureMode.ARCHIVE) sample.SetStreamDataType(StreamDataType.ARCHIVED_SAMPLE);
-                    else sample.SetStreamDataType(StreamDataType.CURRENT_SAMPLE);
-
-                    // Add to list if new
-                    if (!l.Exists(o => o.DeviceId == sample.DeviceId && o.Id == sample.Id && o.Timestamp >= sample.Timestamp))
+                    var deviceIds = statusData.Select(o => o.DeviceId).Distinct();
+                    foreach (var deviceId in deviceIds)
                     {
-                        l.Add(sample);
+                        statuses.Add(statusData.FindAll(o => o.DeviceId == deviceId).OrderByDescending(o => o.Timestamp).First());
                     }
 
+                    filtered.AddRange(statuses);
+                }
+
+                // Add any Definitions
+                filtered.AddRange(data.OfType<ConnectionDefinitionData>().ToList());
+                filtered.AddRange(data.OfType<AgentDefinitionData>().ToList());
+                filtered.AddRange(data.OfType<ComponentDefinitionData>().ToList());
+                filtered.AddRange(data.OfType<DataItemDefinitionData>().ToList());
+                filtered.AddRange(data.OfType<DeviceDefinitionData>().ToList());
+
+                // Add Samples using the configured Filters
+                var samples = data.OfType<SampleData>().ToList();
+                if (!samples.IsNullOrEmpty())
+                {
+                    // Filter Samples
+                    var filteredSamples = FilterSamples(samples);
+                    foreach (var sample in filteredSamples)
+                    {
+                        filtered.Add(sample);
+                        log.Debug(sample.StreamDataType.ToString() + " : " + sample.DeviceId + " : " + sample.Id + " : " + sample.Timestamp + " : " + sample.CDATA + " : " + sample.Condition);
+                    }
+                }
+            }
+
+            return filtered;
+        }
+
+        private List<SampleData> FilterSamples(List<SampleData> samples)
+        {
+            var filtered = new List<SampleData>();
+
+            List<FilteredDataItem> dataItems = null;
+
+            lock (_lock) dataItems = filteredDataItems.ToList();
+
+            if (dataItems != null)
+            {
+                // Archive
+                foreach (var dataGroup in DataGroups.FindAll(o => o.CaptureMode == CaptureMode.ARCHIVE))
+                {
+                    var newFiltered = FilterSamples(samples, dataGroup);
+                    foreach (var sample in newFiltered)
+                    {
+                        if (!filtered.Exists(o => o.DeviceId == sample.DeviceId && o.Id == sample.Id))
+                        {
+                            sample.SetStreamDataType(StreamDataType.ARCHIVED_SAMPLE);
+                            filtered.Add(sample);
+                        }
+                    }
+                }
+
+                // Current
+                foreach (var dataGroup in DataGroups.FindAll(o => o.CaptureMode == CaptureMode.CURRENT))
+                {
+                    var newFiltered = FilterSamples(samples, dataGroup);
+                    foreach (var sample in newFiltered)
+                    {
+                        if (!filtered.Exists(o => o.DeviceId == sample.DeviceId && o.Id == sample.Id))
+                        {
+                            sample.SetStreamDataType(StreamDataType.CURRENT_SAMPLE);
+                            filtered.Add(sample);
+                        }
+                    }
+                }
+            }
+
+            return filtered;
+        }
+
+        private List<SampleData> FilterSamples(List<SampleData> samples, DataGroup dataGroup)
+        {
+            var filtered = new List<SampleData>();
+
+            List<FilteredDataItem> dataItems = null;
+
+            lock (_lock) dataItems = filteredDataItems.ToList();
+
+            if (dataItems != null)
+            {
+                // Find all of the FilteredDataItems that match each Sample
+                foreach (var sample in samples)
+                {
+                    bool match = dataItems.Exists(o => o.DataGroupId == dataGroup.Id && o.DeviceId == sample.DeviceId && o.DataItemId == sample.Id);
+                    if (match && !filtered.Exists(o => o.DeviceId == sample.DeviceId && o.Id == sample.Id))
+                    {
+                        filtered.Add(sample);
+                    }
+                }
+
+                if (filtered.Count > 0)
+                {
                     // Include other DataGroups
-                    foreach (var includedGroup in dataGroup.IncludedDataGroups)
+                    foreach (var groupName in dataGroup.IncludedDataGroups)
                     {
                         // Find group by name
-                        var group = DataGroups.Find(o => o.Name == includedGroup);
-                        if (group != null)
+                        var includedGroup = DataGroups.Find(o => o.Name == groupName);
+                        if (includedGroup != null)
                         {
-                            // Find most current samples for the group's filters
-                            var currentFiltered = currentSamples.FindAll(o => group.CheckFilters(o, _dataItems, _components));
-                            foreach (var s1 in currentFiltered)
+                            // Find the current samples for the group's filters
+                            var storedFiltered = FilterSamples(storedCurrentSamples.ToList(), includedGroup);
+                            foreach (var sample in storedFiltered)
                             {
-                                var currentSample = s.Copy();
-
-                                // Set the StreamDataType
-                                if (captureMode == CaptureMode.ARCHIVE) currentSample.SetStreamDataType(StreamDataType.ARCHIVED_SAMPLE);
-                                else currentSample.SetStreamDataType(StreamDataType.CURRENT_SAMPLE);
-
                                 // Add to list if new
-                                if (!l.Exists(o => o.DeviceId == currentSample.DeviceId && o.Id == currentSample.Id && o.Timestamp >= currentSample.Timestamp))
+                                if (!filtered.Exists(o => o.DeviceId == sample.DeviceId && o.Id == sample.Id && o.Timestamp >= sample.Timestamp))
                                 {
-                                    l.Add(currentSample);
+                                    filtered.Add(sample);
                                 }
                             }
                         }
@@ -350,39 +370,69 @@ namespace TrakHound.DataClient
                 }
             }
 
-            return l;
+            return filtered;
         }
-
-        private void BufferWorker()
+        
+        private void UpdateStoredLists(List<IStreamData> data)
         {
-            do
+            var components = data.OfType<ComponentDefinitionData>().ToList();
+            var dataItems = data.OfType<DataItemDefinitionData>().ToList();
+
+            if (!components.IsNullOrEmpty() || !dataItems.IsNullOrEmpty())
             {
-                if (connected)
+                // Add Components to stored list
+                foreach (var component in components)
                 {
-                    int maxRecords = MAX_BUFFER_READ_COUNT;
-
-                    var sendList = new List<IStreamData>();
-
-                    sendList.AddRange(Buffer.Read<ConnectionDefinitionData>(maxRecords - sendList.Count).ToList<IStreamData>());
-                    sendList.AddRange(Buffer.Read<AgentDefinitionData>(maxRecords - sendList.Count).ToList<IStreamData>());
-                    sendList.AddRange(Buffer.Read<ComponentDefinitionData>(maxRecords - sendList.Count).ToList<IStreamData>());
-                    sendList.AddRange(Buffer.Read<DataItemDefinitionData>(maxRecords - sendList.Count).ToList<IStreamData>());
-                    sendList.AddRange(Buffer.Read<DeviceDefinitionData>(maxRecords - sendList.Count).ToList<IStreamData>());
-                    sendList.AddRange(Buffer.Read<SampleData>(maxRecords - sendList.Count).ToList<IStreamData>());
-
-                    if (sendList.Count > 0)
+                    lock (_lock)
                     {
-                        var ids = sendList.Select(o => o.EntryId).ToList();
-
-                        log.Info(Hostname + " : " + sendList.Count + " Samples Read from Buffer");
-
-                        // Send Samples to Data Server
-                        streamClient.Write(sendList);
-                        Buffer.Remove(ids);
+                        int i = storedComponents.FindIndex(o => o.DeviceId == component.DeviceId && o.Id == component.Id);
+                        if (i >= 0) storedComponents.RemoveAt(i);
+                        storedComponents.Add(component);
                     }
-                }              
-            } while (!sendStop.WaitOne(BUFFER_READ_INTERVAL, true));
+                }
+
+                // Add DataItems to stored list
+                foreach (var dataItem in dataItems)
+                {
+                    lock (_lock)
+                    {
+                        int i = storedDataItems.FindIndex(o => o.DeviceId == dataItem.DeviceId && o.Id == dataItem.Id);
+                        if (i >= 0) storedDataItems.RemoveAt(i);
+                        storedDataItems.Add(dataItem);
+                    }
+                }
+
+                // Update FilteredDataItems list
+                foreach (var dataGroup in DataGroups)
+                {
+                    // Clear the previous items for this DataGroup first
+                    lock (_lock) filteredDataItems.RemoveAll(o => o.DataGroupId == dataGroup.Id);
+
+                    // Create a new list
+                    var filteredItems = dataGroup.CheckFilters(storedDataItems.ToList(), storedComponents.ToList());
+                    if (!filteredItems.IsNullOrEmpty())
+                    {
+                        foreach (var filteredItem in filteredItems)
+                        {
+                            lock (_lock) filteredDataItems.Add(new FilteredDataItem(dataGroup.Id, filteredItem.DeviceId, filteredItem.Id));
+                        }
+                    }
+                }
+            }
+
+            
+            // Add Samples to stored list
+            foreach (var sample in data.OfType<SampleData>().ToList())
+            {
+                lock (_lock)
+                {
+                    int i = storedCurrentSamples.FindIndex(o => o.DeviceId == sample.DeviceId && o.Id == sample.Id);
+                    if (i >= 0) storedCurrentSamples.RemoveAt(i);
+                    storedCurrentSamples.Add(sample);
+                }
+            }
         }
+
 
         private void StreamClient_SendSuccessful(int successfulCount)
         {
@@ -417,11 +467,43 @@ namespace TrakHound.DataClient
             log.Warn("Connected to : " + Hostname);
             connected = true;
         }
+
         private void StreamClient_Disconnected(object sender, System.EventArgs e)
         {
             log.Warn("Disconnected to : " + Hostname);
             connected = false;
         }
 
+
+        private void BufferWorker()
+        {
+            do
+            {
+                if (connected)
+                {
+                    int maxRecords = MAX_BUFFER_READ_COUNT;
+
+                    var sendList = new List<IStreamData>();
+
+                    sendList.AddRange(Buffer.Read<ConnectionDefinitionData>(maxRecords - sendList.Count).ToList<IStreamData>());
+                    sendList.AddRange(Buffer.Read<AgentDefinitionData>(maxRecords - sendList.Count).ToList<IStreamData>());
+                    sendList.AddRange(Buffer.Read<ComponentDefinitionData>(maxRecords - sendList.Count).ToList<IStreamData>());
+                    sendList.AddRange(Buffer.Read<DataItemDefinitionData>(maxRecords - sendList.Count).ToList<IStreamData>());
+                    sendList.AddRange(Buffer.Read<DeviceDefinitionData>(maxRecords - sendList.Count).ToList<IStreamData>());
+                    sendList.AddRange(Buffer.Read<SampleData>(maxRecords - sendList.Count).ToList<IStreamData>());
+
+                    if (sendList.Count > 0)
+                    {
+                        var ids = sendList.Select(o => o.EntryId).ToList();
+
+                        log.Info(Hostname + " : " + sendList.Count + " Samples Read from Buffer");
+
+                        // Send Samples to Data Server
+                        streamClient.Write(sendList);
+                        Buffer.Remove(ids);
+                    }
+                }
+            } while (!sendStop.WaitOne(BUFFER_READ_INTERVAL, true));
+        }
     }
 }
