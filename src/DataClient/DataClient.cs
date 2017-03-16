@@ -26,6 +26,7 @@ namespace TrakHound.DataClient
         internal static object _lock = new object();
         private int devicesFound = 0;
         private MTConnectSniffer.MTConnectDevice foundDevice;
+        private DeviceStartQueue deviceStartQueue = new DeviceStartQueue();
 
 
         private Configuration _configuration;
@@ -40,6 +41,8 @@ namespace TrakHound.DataClient
             PrintHeader();
 
             _configuration = config;
+
+            deviceStartQueue.DeviceStarted += DeviceStartQueue_DeviceStarted;
         }
 
         public void Start()
@@ -54,8 +57,10 @@ namespace TrakHound.DataClient
             }
 
             // Start Devices
+            deviceStartQueue.Start();
             foreach (var device in _configuration.Devices)
             {
+                log.Info("Device Read : " + device.DeviceId + " : " + device.DeviceName + " : " + device.Address + " : " + device.Port);
                 StartDevice(device);
             }
 
@@ -92,6 +97,7 @@ namespace TrakHound.DataClient
             // Stop the Device Finder
             var deviceFinder = _configuration.DeviceFinder;
             if (deviceFinder != null) deviceFinder.Stop();
+            if (deviceStartQueue != null) deviceStartQueue.Stop();
         }
 
         private void DeviceFinder_SearchCompleted(long milliseconds)
@@ -100,6 +106,9 @@ namespace TrakHound.DataClient
             {
                 Configuration.Save();
             }
+
+            var time = TimeSpan.FromMilliseconds(milliseconds);
+            log.Info(string.Format("Device Finder : Search Completed : {0} Devices Found in {1}", devicesFound, time.ToString()));
 
             devicesFound = 0;
             foundDevice = null;
@@ -145,14 +154,19 @@ namespace TrakHound.DataClient
             device.DataItemDefinitionsReceived += DataDefinitionsReceived;
             device.SamplesReceived += SamplesReceived;
             device.StatusUpdated += StatusUpdated;
-            device.Start();
+
+            // Add to Start Queue (to prevent all Devices from starting at once and using too many resources)
+            deviceStartQueue.Add(device);
 
             // Send Connection to DataServers
             foreach (var dataServer in Configuration.DataServers)
             {
                 dataServer.Add(device.AgentConnection);
             }
+        }
 
+        private void DeviceStartQueue_DeviceStarted(Device device)
+        {
             log.Info("Device Started : " + device.DeviceId + " : " + device.DeviceName + " : " + device.Address + " : " + device.Port);
         }
 
