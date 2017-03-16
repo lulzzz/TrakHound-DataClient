@@ -9,8 +9,6 @@ using System.Configuration.Install;
 using System.IO;
 using System.Reflection;
 using System.ServiceProcess;
-using System.Security.AccessControl;
-using System.Security.Principal;
 
 namespace TrakHound.DataClient
 {
@@ -83,12 +81,6 @@ namespace TrakHound.DataClient
             if (!File.Exists(configPath) && File.Exists(defaultPath))
             {
                 File.Copy(defaultPath, configPath);
-
-                // Set File Permissions
-                //var info = new FileInfo(configPath);
-                //var security = info.GetAccessControl();
-                //security.AddAccessRule(new FileSystemAccessRule(new SecurityIdentifier(WellKnownSidType.WorldSid, null), FileSystemRights.FullControl, InheritanceFlags.ObjectInherit | InheritanceFlags.ContainerInherit, PropagationFlags.NoPropagateInherit, AccessControlType.Allow));
-                //info.SetAccessControl(security);
             } 
             var config = Configuration.Read(configPath);
             if (config != null)
