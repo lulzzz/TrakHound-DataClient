@@ -11,7 +11,10 @@
         xmlns:local="clr-namespace:TrakHound.DataClient.Configurator"
         xmlns:ui="clr-namespace:TrakHound_UI;assembly=TrakHound-UI"
         mc:Ignorable="d"
-        Title="TrakHound DataClient - Configurator" Height="650" Width="1000" Icon="Resources/dataclient-configurator.ico" ResizeMode="CanResizeWithGrip" WindowStartupLocation="CenterScreen" Closing="Window_Closing">
+        Title="Configurator - TrakHound DataClient" Icon="Resources/dataclient-configurator.ico"
+        Height="650" Width="1000"  
+        ResizeMode="CanResizeWithGrip" WindowStartupLocation="CenterScreen" 
+        Closing="Window_Closing">
 
     <Grid>
         <Grid.RowDefinitions>
@@ -19,13 +22,14 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
+        <!--Menu Bar-->
         <Menu Background="Transparent">
             <MenuItem Header="File">
                 <MenuItem Header="Reload Configuration" Click="ReloadConfiguration_Click"/>
                 <MenuItem Header="Exit" Click="Exit_Click"/>
             </MenuItem>
             <MenuItem Header="Devices">
-                <MenuItem Header="Find" Click="FindDevices"/>
+                <MenuItem Header="Find Devices.." Click="FindDevices_Menu_Clicked"/>
             </MenuItem>
             <MenuItem Header="Help">
                 <MenuItem Header="About" Click="About_Click"/>
@@ -39,11 +43,22 @@
 
                 <Grid Grid.Column="1">
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="auto"/>
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="auto"/>
                     </Grid.RowDefinitions>
 
-                    <Grid>
+                    <StackPanel Orientation="Horizontal">
+                        
+                        <!--Find Devices-->
+                        <ui:Button Text="Find Devices" Image="Resources/Search_01.png" Clicked="FindDevices_Clicked" Style="{StaticResource ToolBar_Button}" ImageTextPadding="5" Margin="0,0,10,0"/>
+
+                        <!--Find Devices Automatically-->
+                        <CheckBox Content="Find Devices Automatically" IsChecked="{Binding FindDevicesAutomatically, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
+
+                    </StackPanel>
+
+                    <Grid Grid.Row="1">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="5"/>
@@ -131,7 +146,7 @@
                     </Grid>
 
                     <!--Add Device Panel-->
-                    <Border Grid.Row="1" BorderBrush="{StaticResource Border}" BorderThickness="0,1,0,0">
+                    <Border Grid.Row="2" BorderBrush="{StaticResource Border}" BorderThickness="0,1,0,0">
 
                         <Grid Margin="15,0,15,15">
                             <Grid.ColumnDefinitions>
@@ -468,6 +483,20 @@
             </TabItem>
 
         </TabControl>
+
+        <!--Disabled Shade-->
+        <Rectangle Grid.RowSpan="10" Fill="#66000000">
+            <Rectangle.Style>
+                <Style TargetType="Rectangle">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsEnabled}" Value="False">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Rectangle.Style>
+        </Rectangle>
 
     </Grid>
 

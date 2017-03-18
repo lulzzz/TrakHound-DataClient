@@ -10,7 +10,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TrakHound.DataClient.Configurator"
         mc:Ignorable="d"
-        Title="About DataClient Configurator" Height="200" Width="450" ResizeMode="NoResize" WindowStartupLocation="CenterScreen" Icon="Resources/About_01.png" Topmost="True">
+        Title="About DataClient Configurator" Height="200" Width="450" ResizeMode="NoResize" WindowStartupLocation="CenterOwner" Icon="Resources/About_01.png" Topmost="True">
 
     <StackPanel Margin="15">
 

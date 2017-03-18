@@ -22,5 +22,53 @@ namespace TrakHound.DataClient.Configurator.Properties {
                 return defaultInstance;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string AddressFrom {
+            get {
+                return ((string)(this["AddressFrom"]));
+            }
+            set {
+                this["AddressFrom"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string AddressTo {
+            get {
+                return ((string)(this["AddressTo"]));
+            }
+            set {
+                this["AddressTo"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("5000")]
+        public int PortFrom {
+            get {
+                return ((int)(this["PortFrom"]));
+            }
+            set {
+                this["PortFrom"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("5019")]
+        public int PortTo {
+            get {
+                return ((int)(this["PortTo"]));
+            }
+            set {
+                this["PortTo"] = value;
+            }
+        }
     }
 }

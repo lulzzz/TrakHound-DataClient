@@ -5,6 +5,7 @@
 
 using NLog;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
@@ -21,10 +22,20 @@ namespace TrakHound.DataClient.Configurator
     public partial class MainWindow : Window
     {
         private static Logger log = LogManager.GetCurrentClassLogger();
+        public static Configuration Configuration;
+        public static FileSystemWatcher ConfigurationWatcher;
 
-        private Configuration configuration;
-        private FileSystemWatcher configurationWatcher;
         private Sniffer sniffer;
+
+
+        public bool IsEnabled
+        {
+            get { return (bool)GetValue(IsEnabledProperty); }
+            set { SetValue(IsEnabledProperty, value); }
+        }
+
+        public static readonly DependencyProperty IsEnabledProperty =
+            DependencyProperty.Register("IsEnabled", typeof(bool), typeof(MainWindow), new PropertyMetadata(true));
 
 
         public Device SelectedDevice
@@ -102,6 +113,31 @@ namespace TrakHound.DataClient.Configurator
                 SelectedDataServerSendInterval = 500;
                 SelectedDataServerUseSSL = false;
             }
+        }
+
+
+        public bool FindDevicesAutomatically
+        {
+            get { return (bool)GetValue(FindDevicesAutomaticallyProperty); }
+            set
+            {
+                SetFindDevicesAutomatically(value);
+                SetValue(FindDevicesAutomaticallyProperty, value);
+            }
+        }
+
+        public static readonly DependencyProperty FindDevicesAutomaticallyProperty =
+            DependencyProperty.Register("FindDevicesAutomatically", typeof(bool), typeof(MainWindow), new PropertyMetadata(false, new PropertyChangedCallback(FindDevicesAutomatically_PropertyChanged)));
+
+        private static void FindDevicesAutomatically_PropertyChanged(DependencyObject obj, DependencyPropertyChangedEventArgs e)
+        {
+            var o = obj as MainWindow;
+            if (o != null) o.SetFindDevicesAutomatically((bool)e.NewValue);
+        }
+
+        internal void SetFindDevicesAutomatically(bool find)
+        {
+            SaveDeviceFinder();
         }
 
 
@@ -355,7 +391,7 @@ namespace TrakHound.DataClient.Configurator
         private void ReadConfigurationFile()
         {
             // Disable File Watcher
-            if (configurationWatcher != null) configurationWatcher.EnableRaisingEvents = false;
+            if (ConfigurationWatcher != null) ConfigurationWatcher.EnableRaisingEvents = false;
 
             Devices.Clear();
             DataServerItems.Clear();
@@ -367,19 +403,22 @@ namespace TrakHound.DataClient.Configurator
             var config = Configuration.Read(configPath);
             if (config != null)
             {
-                configuration = config;
+                Configuration = config;
 
+                // Devices
                 if (config.Devices != null)
                 {
-                    // Devices
                     foreach (var device in config.Devices)
                     {
                         Devices.Add(device);
                     }
 
                     if (Devices != null && Devices.Count > 0) SelectedDevice = Devices[0];
+                }
 
-                    // DataServers
+                // DataServers
+                if (config.DataServers != null)
+                {
                     foreach (var dataServer in config.DataServers)
                     {
                         DataServerItems.Add(new DataServerItem(dataServer));
@@ -387,6 +426,9 @@ namespace TrakHound.DataClient.Configurator
 
                     if (DataServerItems != null && DataServerItems.Count > 0) SelectedDataServer = DataServerItems[0];
                 }
+
+                // Device Finder
+                FindDevicesAutomatically = config.DeviceFinder != null;
             }
 
             StartConfigurationFileWatcher();
@@ -394,12 +436,12 @@ namespace TrakHound.DataClient.Configurator
 
         private void StartConfigurationFileWatcher()
         {
-            if (configurationWatcher == null)
+            if (ConfigurationWatcher == null)
             {
-                configurationWatcher = new FileSystemWatcher(AppDomain.CurrentDomain.BaseDirectory, Configuration.FILENAME);
-                configurationWatcher.Changed += ConfigurationFileChanged;
+                ConfigurationWatcher = new FileSystemWatcher(AppDomain.CurrentDomain.BaseDirectory, Configuration.FILENAME);
+                ConfigurationWatcher.Changed += ConfigurationFileChanged;
             }
-            configurationWatcher.EnableRaisingEvents = true;
+            ConfigurationWatcher.EnableRaisingEvents = true;
         }
 
         private void ConfigurationFileChanged(object sender, FileSystemEventArgs e)
@@ -416,36 +458,50 @@ namespace TrakHound.DataClient.Configurator
             }
         }
 
-        private void SaveDevices()
+
+        internal static void SaveDevices(List<Device> devices)
         {
-            if (configurationWatcher != null) configurationWatcher.EnableRaisingEvents = false;
-
-            if (Devices != null)
+            if (devices != null)
             {
-                configuration.Devices = Devices.ToList();
-                configuration.Save();
-            }
+                if (ConfigurationWatcher != null) ConfigurationWatcher.EnableRaisingEvents = false;
 
-            if (configurationWatcher != null) configurationWatcher.EnableRaisingEvents = true;
+                Configuration.Devices = devices.ToList();
+                Configuration.Save();
+
+                if (ConfigurationWatcher != null) ConfigurationWatcher.EnableRaisingEvents = true;
+            }
         }
 
         private void SaveDataServers()
         {
-            if (configurationWatcher != null) configurationWatcher.EnableRaisingEvents = false;
+            if (ConfigurationWatcher != null) ConfigurationWatcher.EnableRaisingEvents = false;
 
             if (DataServerItems != null)
             {
-                configuration.DataServers.Clear();
+                Configuration.DataServers.Clear();
                 foreach (var item in DataServerItems)
                 {
-                    configuration.DataServers.Add(item.DataServer);
+                    Configuration.DataServers.Add(item.DataServer);
                 }
 
-                configuration.Save();
+                Configuration.Save();
             }
 
-            if (configurationWatcher != null) configurationWatcher.EnableRaisingEvents = true;
+            if (ConfigurationWatcher != null) ConfigurationWatcher.EnableRaisingEvents = true;
         }
+
+        private void SaveDeviceFinder()
+        {
+            if (ConfigurationWatcher != null) ConfigurationWatcher.EnableRaisingEvents = false;
+
+            if (FindDevicesAutomatically) Configuration.DeviceFinder = new DeviceFinder.DeviceFinder();
+            else Configuration.DeviceFinder = null;
+
+            Configuration.Save();
+
+            if (ConfigurationWatcher != null) ConfigurationWatcher.EnableRaisingEvents = true;
+        }
+
 
         private void AddDevice_Clicked(TrakHound_UI.Button bt)
         {
@@ -458,7 +514,7 @@ namespace TrakHound.DataClient.Configurator
             Devices.Add(device);
             SelectedDevice = device;
 
-            SaveDevices();
+            SaveDevices(Devices.ToList());
         }
 
         private void SaveDevice_Clicked(TrakHound_UI.Button bt)
@@ -483,7 +539,7 @@ namespace TrakHound.DataClient.Configurator
                     SelectedDevice = Devices[i];
                 }
 
-                SaveDevices();
+                SaveDevices(Devices.ToList());
             }         
         }
 
@@ -502,7 +558,7 @@ namespace TrakHound.DataClient.Configurator
                         SelectedDevice = Devices[i];
                     }
 
-                    SaveDevices();
+                    SaveDevices(Devices.ToList());
                 }
             }
         }
@@ -619,38 +675,29 @@ namespace TrakHound.DataClient.Configurator
             }
         }
 
-        private void About_Click(object sender, RoutedEventArgs e)
+
+        private void FindDevices()
         {
             IsEnabled = false;
-            new About().ShowDialog();
+            var findDevices = new FindDevices();
+            findDevices.Owner = this;
+            if (findDevices.ShowDialog() == true)
+            {
+                var addDevices = new AddDevices(this);
+                addDevices.ShowDialog();
+            }
             IsEnabled = true;
         }
 
-        private void FindDevices(object sender, RoutedEventArgs e)
-        {
-            Cursor = System.Windows.Input.Cursors.AppStarting;
-
-            if (sniffer != null) sniffer.Stop();
-
-            ThreadPool.QueueUserWorkItem(new WaitCallback((o) =>
-            {
-                sniffer = new Sniffer();
-                sniffer.DeviceFound += Sniffer_DeviceFound;
-                sniffer.RequestsCompleted += Sniffer_RequestsCompleted;
-                sniffer.Start();
-            }));
-        }
-
-
         private void Sniffer_DeviceFound(MTConnectDevice device)
         {
-            if (configuration.Devices != null)
+            if (Configuration.Devices != null)
             {
                 // Generate the Device ID Hash
                 string deviceId = DataClient.GenerateDeviceId(device);
 
                 // Check to make sure the Device is not already added
-                if (!configuration.Devices.Exists(o => o.DeviceId == deviceId))
+                if (!Configuration.Devices.Exists(o => o.DeviceId == deviceId))
                 {
                     var conn = new Api.v2.Data.Connection();
                     conn.Address = device.IpAddress.ToString();
@@ -674,13 +721,25 @@ namespace TrakHound.DataClient.Configurator
         {
             Dispatcher.BeginInvoke(new Action(() =>
             {
-                SaveDevices();
+                SaveDevices(Devices.ToList());
 
                 Cursor = System.Windows.Input.Cursors.Arrow;
 
                 MessageBox.Show("Find Devices Completed Successfully", "Find Devices Completed");
             }));
         }
+
+
+        private void About_Click(object sender, RoutedEventArgs e)
+        {
+            IsEnabled = false;
+            new About() { Owner = this }.ShowDialog();
+            IsEnabled = true;
+        }
+
+        private void FindDevices_Menu_Clicked(object sender, RoutedEventArgs e) { FindDevices(); }
+
+        private void FindDevices_Clicked(TrakHound_UI.Button bt) { FindDevices(); }
 
         private void ReloadConfiguration_Click(object sender, RoutedEventArgs e)
         {
@@ -695,7 +754,8 @@ namespace TrakHound.DataClient.Configurator
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             if (sniffer != null) sniffer.Stop();
-            if (configurationWatcher != null) configurationWatcher.EnableRaisingEvents = false;
+            if (ConfigurationWatcher != null) ConfigurationWatcher.EnableRaisingEvents = false;
         }
+
     }
 }
