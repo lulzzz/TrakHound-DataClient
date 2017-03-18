@@ -336,12 +336,15 @@ namespace TrakHound.DataClient
 
             if (dataItems != null)
             {
+                var deviceIds = new List<string>();
+
                 // Find all of the FilteredDataItems that match each Sample
                 foreach (var sample in samples)
                 {
                     bool match = dataItems.Exists(o => o.DataGroupId == dataGroup.Id && o.DeviceId == sample.DeviceId && o.DataItemId == sample.Id);
                     if (match && !filtered.Exists(o => o.DeviceId == sample.DeviceId && o.Id == sample.Id))
                     {
+                        if (!deviceIds.Exists(o => o == sample.DeviceId)) deviceIds.Add(sample.DeviceId);
                         filtered.Add(sample);
                     }
                 }
@@ -355,14 +358,23 @@ namespace TrakHound.DataClient
                         var includedGroup = DataGroups.Find(o => o.Name == groupName);
                         if (includedGroup != null)
                         {
-                            // Find the current samples for the group's filters
-                            var storedFiltered = FilterSamples(storedCurrentSamples.ToList(), includedGroup);
-                            foreach (var sample in storedFiltered)
+                            List<SampleData> storedSamples = null;
+                            lock (_lock) storedSamples = storedCurrentSamples.ToList();
+                            if (!storedSamples.IsNullOrEmpty())
                             {
-                                // Add to list if new
-                                if (!filtered.Exists(o => o.DeviceId == sample.DeviceId && o.Id == sample.Id && o.Timestamp >= sample.Timestamp))
+                                // Filter out any DeviceIds that weren't updated
+                                var samplesToFilter = new List<SampleData>();
+                                foreach (var deviceId in deviceIds) samplesToFilter.AddRange(storedSamples.FindAll(o => o.DeviceId == deviceId));
+
+                                // Filter Samples using the Included Group's Filters
+                                var storedFiltered = FilterSamples(samplesToFilter, includedGroup);
+                                foreach (var sample in storedFiltered)
                                 {
-                                    filtered.Add(sample);
+                                    // Add to list if new
+                                    if (!filtered.Exists(o => o.DeviceId == sample.DeviceId && o.Id == sample.Id && o.Timestamp >= sample.Timestamp))
+                                    {
+                                        filtered.Add(sample);
+                                    }
                                 }
                             }
                         }
