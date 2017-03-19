@@ -9,14 +9,13 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Net;
+using System.Net.NetworkInformation;
+using System.Net.Sockets;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using TrakHound.MTConnectSniffer;
-using System.Net;
-using System.Net.NetworkInformation;
-using System.Net.Sockets;
 
 namespace TrakHound.DataClient.Configurator
 {

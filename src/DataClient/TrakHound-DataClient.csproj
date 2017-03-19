@@ -65,8 +65,8 @@
     <Reference Include="System.Configuration.Install" />
     <Reference Include="System.Core" />
     <Reference Include="System.Management" />
-    <Reference Include="System.Net.IPNetwork, Version=2.0.4.0, Culture=neutral, PublicKeyToken=764160545cf0d618, processorArchitecture=MSIL">
-      <HintPath>..\packages\IPNetwork2.2.0.4\lib\net40\System.Net.IPNetwork.dll</HintPath>
+    <Reference Include="System.Net.IPNetwork, Version=2.0.3.0, Culture=neutral, PublicKeyToken=764160545cf0d618, processorArchitecture=MSIL">
+      <HintPath>..\packages\IPNetwork2.2.0.3\lib\net40\System.Net.IPNetwork.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System.Numerics" />
