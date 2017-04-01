@@ -42,8 +42,8 @@
     <ApplicationIcon>Resources\dataclient-configurator.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="MTConnect-NET, Version=2.5.0.22963, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\MTConnect.NET.2.5.0.22963\lib\net40\MTConnect-NET.dll</HintPath>
+    <Reference Include="MTConnect-NET, Version=2.6.0.2197, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\MTConnect.NET.2.6.0.2197\lib\net40\MTConnect-NET.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="MTConnect-Sniffer, Version=1.3.0.23471, Culture=neutral, processorArchitecture=MSIL">
@@ -78,8 +78,8 @@
     <Reference Include="System.Xaml">
       <RequiredTargetFramework>4.0</RequiredTargetFramework>
     </Reference>
-    <Reference Include="TrakHound-Api, Version=1.6.0.15110, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\TrakHound-Api.1.6.0.15110\lib\net40\TrakHound-Api.dll</HintPath>
+    <Reference Include="TrakHound-Api, Version=1.8.2.2408, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\TrakHound-Api.1.8.2.2408\lib\net40\TrakHound-Api.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="TrakHound-UI, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
