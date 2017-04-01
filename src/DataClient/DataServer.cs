@@ -263,6 +263,7 @@ namespace TrakHound.DataClient
                 // Add any Definitions
                 filtered.AddRange(data.OfType<ConnectionDefinitionData>().ToList());
                 filtered.AddRange(data.OfType<AgentDefinitionData>().ToList());
+                filtered.AddRange(data.OfType<AssetDefinitionData>().ToList());
                 filtered.AddRange(data.OfType<ComponentDefinitionData>().ToList());
                 filtered.AddRange(data.OfType<DataItemDefinitionData>().ToList());
                 filtered.AddRange(data.OfType<DeviceDefinitionData>().ToList());

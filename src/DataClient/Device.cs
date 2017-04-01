@@ -155,6 +155,11 @@ namespace TrakHound.DataClient
         public event AgentDefinitionsHandler AgentDefinitionsReceived;
 
         /// <summary>
+        /// Event raised when a new AssetDefinition is read.
+        /// </summary>
+        public event AssetDefinitionsHandler AssetDefinitionsReceived;
+
+        /// <summary>
         /// Event raised when a new DeviceDefinition is read.
         /// </summary>
         public event DeviceDefinitionsHandler DeviceDefinitionsReceived;
@@ -263,6 +268,7 @@ namespace TrakHound.DataClient
                 _agentClient.ProbeReceived += DevicesSuccessful;
                 _agentClient.CurrentReceived += StreamsSuccessful;
                 _agentClient.SampleReceived += StreamsSuccessful;
+                _agentClient.AssetsReceived += AssetsReceived;
                 _agentClient.ConnectionError += _agentClient_ConnectionError;
 
                 // Start the MTConnectClient
@@ -391,6 +397,25 @@ namespace TrakHound.DataClient
             }
         }
 
+        private void AssetsReceived(MTConnect.MTConnectAssets.Document document)
+        {
+            log.Trace("MTConnect Assets Document Received @ " + DateTime.Now.ToString("o"));
+
+            UpdateConnectedStatus(true);
+
+            if (document.Assets != null)
+            {
+                var assets = new List<AssetDefinitionData>();
+
+                foreach (var asset in document.Assets.Assets)
+                {
+                    assets.Add(Create(_deviceId, document.Header.InstanceId, asset));
+                }
+
+                if (assets.Count > 0) AssetDefinitionsReceived?.Invoke(assets);
+            }
+        }
+
         private static AgentDefinitionData Create(string deviceId, MTConnect.Headers.MTConnectDevicesHeader header)
         {
             var obj = new AgentDefinitionData();
@@ -405,6 +430,21 @@ namespace TrakHound.DataClient
             obj.Version = header.Version;
             obj.BufferSize = header.BufferSize;
             obj.TestIndicator = header.TestIndicator;
+
+            return obj;
+        }
+
+        private static AssetDefinitionData Create(string deviceId, long agentInstanceId, MTConnect.MTConnectAssets.Asset asset)
+        {
+            var obj = new AssetDefinitionData();
+
+            // TrakHound Properties
+            obj.DeviceId = deviceId;
+            obj.AgentInstanceId = agentInstanceId;
+            obj.Id = asset.AssetId;
+            obj.Timestamp = asset.Timestamp;
+            obj.Type = asset.Type;
+            obj.Xml = asset.Xml;
 
             return obj;
         }

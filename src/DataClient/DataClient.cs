@@ -153,6 +153,7 @@ namespace TrakHound.DataClient
             device.ComponentDefinitionsReceived += ComponentDefinitionsReceived;
             device.DataItemDefinitionsReceived += DataDefinitionsReceived;
             device.SamplesReceived += SamplesReceived;
+            device.AssetDefinitionsReceived += AssetDefinitionsReceived;
             device.StatusUpdated += StatusUpdated;
 
             // Add to Start Queue (to prevent all Devices from starting at once and using too many resources)
@@ -212,6 +213,15 @@ namespace TrakHound.DataClient
             foreach (var dataServer in Configuration.DataServers)
             {
                 dataServer.Add(samples.ToList<IStreamData>());
+            }
+        }
+
+        private void AssetDefinitionsReceived(List<AssetDefinitionData> definitions)
+        {
+            // Send to DataServers
+            foreach (var dataServer in Configuration.DataServers)
+            {
+                dataServer.Add(definitions.ToList<IStreamData>());
             }
         }
 

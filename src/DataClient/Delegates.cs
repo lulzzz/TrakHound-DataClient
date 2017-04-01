@@ -10,6 +10,8 @@ namespace TrakHound.DataClient
 {
     public delegate void AgentDefinitionsHandler(AgentDefinitionData definition);
 
+    public delegate void AssetDefinitionsHandler(List<AssetDefinitionData> definitions);
+
     public delegate void ComponentDefinitionsHandler(List<ComponentDefinitionData> definitions);
 
     public delegate void DataItemDefinitionsHandler(List<DataItemDefinitionData> definitions);
